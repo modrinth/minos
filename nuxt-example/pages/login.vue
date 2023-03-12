@@ -1,6 +1,6 @@
 <template>
   <div id="login">
-    <form @submit.prevent="login">
+    <form @submit.prevent="loginPassword">
       <input v-model="email" placeholder="email">
       <input v-model="password" placeholder="password" type="password">
       <input type="submit" value="log in">
@@ -9,6 +9,32 @@
     <li v-for="ory_ui_msg in ory_ui_msgs">
       {{ ory_ui_msg.text }}
     </li>
+
+    <form @submit.prevent="loginGithub">
+      <input type="submit" value="log in with github">
+    </form>
+
+    <form @submit.prevent="loginDiscord">
+      <input type="submit" value="log in with discord">
+    </form>
+
+    <form @submit.prevent="loginMicrosoft">
+      <input type="submit" value="log in with microsoft">
+    </form>
+
+    <form @submit.prevent="loginGoogle">
+      <input type="submit" value="log in with google">
+    </form>
+
+    <p> Note: authorizing via  google will only work for a couple accounts that I've preauthorized. (I can add more, just message me.)</p>
+    <li>wyatt@modrinth.com</li>
+        <li>jai@modrinth.com</li>
+        <li>wverchere@gmail.com</li>
+
+      <p> This is because Google does not allow signin with any account until the oauth app is reviewed and published.</p>
+      
+
+
 
   </div>
 </template>
@@ -36,8 +62,60 @@ export default {
       password: ""
     };
   },
+
   methods: {
-    async login() {
+    async loginPassword() {
+      // loginFlowBody is an instance of UpdateLoginFlowWithPasswordMethod
+      let loginFlowBody = {
+        csrf_token: '', // set in generic function
+        identifier: this.email,
+        method: "password",
+        password: this.password,
+      }
+        await this.loginGeneric(loginFlowBody);
+    },
+    async loginGithub() {
+      // loginFlowBody is an instance of UpdateLoginFlowWithOidcMethod
+        let loginFlowBody = {
+          csrf_token: '', // set in generic function
+          method: "oidc",
+          provider: "github",
+        }
+        await this.loginGeneric(loginFlowBody);
+    },
+
+    async loginDiscord() {
+      // loginFlowBody is an instance of UpdateLoginFlowWithOidcMethod
+        let loginFlowBody = {
+          csrf_token: '', // set in generic function
+          method: "oidc",
+          provider: "discord",
+        }
+        await this.loginGeneric(loginFlowBody);
+    },
+    async loginGoogle() {
+      // loginFlowBody is an instance of UpdateLoginFlowWithOidcMethod
+        let loginFlowBody = {
+          csrf_token: '', // set in generic function
+          method: "oidc",
+          provider: "google",
+        }
+        await this.loginGeneric(loginFlowBody);
+    },
+    async loginMicrosoft() {
+      // loginFlowBody is an instance of UpdateLoginFlowWithOidcMethod
+        let loginFlowBody = {
+          csrf_token: '', // set in generic function
+          method: "oidc",
+          provider: "microsoft",
+        }
+        await this.loginGeneric(loginFlowBody);
+    },
+
+
+
+
+    async loginGeneric(loginFlowBody) {
       // getLoginFlow
       // -> get login flow object, to get proper query link and csrf token
       // 'id' is id of the login flow, which is passed as a parameter if redirected to this page through Ory 
@@ -48,8 +126,8 @@ export default {
       let returned_nodes = flow_data.data.ui.nodes;
       let csrf_token = '';
       for (let i = 0; i < returned_nodes.length; i++){
-        if (returned_nodes[i].attributes.name="csrf_token"){
-          csrf_token=returned_nodes[i].attributes.value;
+        if (returned_nodes[i].attributes.name=="csrf_token"){
+          loginFlowBody.csrf_token=returned_nodes[i].attributes.value;
           break;
         }
       }
@@ -57,17 +135,10 @@ export default {
       // updateLoginFlowBody can match one of:
       // UpdateLoginFlowWithLookupSecretMethod | UpdateLoginFlowWithOidcMethod | UpdateLoginFlowWithPasswordMethod | UpdateLoginFlowWithTotpMethod | UpdateLoginFlowWithWebAuthnMethod
       // For different ways to authenticate
-      // In this case, it matches UpdateLoginFlowWithPasswordMethod
-      const email = this.email;
-      const password = this.password;
+
       await ory.updateLoginFlow({
         flow: this.$route.query.flow,
-        updateLoginFlowBody: {
-          csrf_token: csrf_token, // must be directly sent
-          identifier: email,
-          method: "password",
-          password: password,
-        }
+        updateLoginFlowBody: loginFlowBody
         //xSessionToken?
         //cookie?
       }).then( r => {
@@ -78,11 +149,21 @@ export default {
           window.location.href = return_url;
       }
 
-        // Worked! redirect back to main page OR the page you started at
-        // (optional: very easy to make you stay logged in after initial registeraation)
       ).catch(e => {
+
+        // IMPORTANT: The redirect browser page might be contained with an error.
+        console.log(e.response)
+        console.log(e.response.data.redirect_browser_to);
+        if("data" in e.response){
+          if ("redirect_browser_to" in e.response) {
+            window.location.href = e.response.data.redirect_browser_to;
+          }
+        }
+
+        console.log(e)
         console.log(e.response)
         let ary = []
+        if ("data" in e.response)
           if ("messages" in e.response.data.ui) {
             ary = ary.concat(e.response.data.ui.messages)
           } else if ("nodes" in e.response.data.ui) {
@@ -94,6 +175,7 @@ export default {
         this.ory_ui_msgs = ary;
       });
     }
+
   }
 };
 </script>

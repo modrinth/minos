@@ -73,6 +73,7 @@ async fn main() -> std::io::Result<()> {
             )
             .app_data(web::Data::new(configuration.clone()))
             .service(routes::demo::demo_get)
+            .service(routes::demo::delete_all)
             .wrap(sentry_actix::Sentry::new())
             .default_service(web::get().to(routes::not_found))
     })

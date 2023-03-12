@@ -51,7 +51,7 @@ export default {
       let returned_nodes = flow_data.data.ui.nodes;
       let csrf_token = '';
       for (let i = 0; i < returned_nodes.length; i++){
-        if (returned_nodes[i].attributes.name="csrf_token"){
+        if (returned_nodes[i].attributes.name=="csrf_token"){
           csrf_token=returned_nodes[i].attributes.value;
           break;
         }
@@ -100,7 +100,7 @@ export default {
       let returned_nodes = flow_data.data.ui.nodes;
       let csrf_token = '';
       for (let i = 0; i < returned_nodes.length; i++){
-        if (returned_nodes[i].attributes.name="csrf_token"){
+        if (returned_nodes[i].attributes.name=="csrf_token"){
           csrf_token=returned_nodes[i].attributes.value;
           break;
         }

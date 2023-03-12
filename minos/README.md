@@ -14,8 +14,7 @@ If it passes, it returns the Ory sessoin as a JSON. Otherwise, it returns 401.
 
 The easiest/clearest way to set up is using the Ory-hosted backend.
 
-1. Install the Ory CLI depending on your OS [from the link here](https://www.ory.sh/docs/guides/cli/installation)
-2. Run `ory tunnel http://localhost:4455 --project ecstatic-lehmann-onx4dw646f --port 4433 --dev` to access our Ory project from `localhost:4433`. If it asks you to log in, you do not need to for this purpose. (If the tunnel already running, you don't have to run it again).
+1. [Follow the Nuxt setup instructions here]([See the Nuxt example self-hosted instructions here](../nuxt-example/README.md#tldr-setup)) to set up the site and create a tunnel to the Ory console.
 3. In this folder (in another window), `cargo run` to start the server.
 
 # Ory Account

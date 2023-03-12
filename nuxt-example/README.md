@@ -7,9 +7,13 @@ A Nuxt example that goes through the Ory login flow with customizable UI
 
 The easiest/clearest way to set up is using the Ory-hosted backend and the Nuxt.js frontend that is in this repo.
 
+Several optional steps are listed here: these steps are not required to have a working demo site with working login flow, but are required to test external social logins (ie: 'log in with Github!')
+
+1. (Optional) Create an Ory account and get access to the console + project. 
 1. Install the Ory CLI depending on your OS [from the link here](https://www.ory.sh/docs/guides/cli/installation)
 2. In this directory, run `npm install` (with a recent version of node being used).
-3. Run `ory tunnel http://localhost:4455 --project ecstatic-lehmann-onx4dw646f --port 4433 --dev` to access our Ory project from `localhost:4433`. If it asks you to log in, you do not need to for this purpose.
+3. Run `ory tunnel http://localhost:4455 --project ecstatic-lehmann-onx4dw646f --port 4433 --dev` to access our Ory project from `localhost:4433`. 
+4. (Optional) Ory tunnel ask you to log in on the CLI using ory tunnel to configure the project. This is needed for testing passing cookies from social logins (ie: login with Github).
 4. In this folder (in another window), `yarn dev` to start Nuxt
 5. Go to `localhost:4455`
 

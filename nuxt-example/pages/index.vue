@@ -6,14 +6,15 @@
       <p>Click on "login" or "Sign Up" below to sign in.</p>
       <li><a :href="login_flow_endpoint" data-testid="sign-in">Login</a></li>
       <li><a :href="register_flow_endpoint" data-testid="sign-up">Sign Up</a></li>
-      <li><a :href="recover_flow_endpoint" data-testid="sign-up">Recover account</a></li>
+      <li><a :href="recover_flow_endpoint" data-testid="recover">Recover account</a></li>
+      <li><a :href="verification_flow_endpoint" data-testid="verify">Verify email</a></li>
 
       <!-- The settings button will REDIRECT to the login one if there is no login! -->
       <li><a :href="settings_flow_endpoint" data-testid="sign-up">Adjust settings</a></li>
-      
+
     </div>
 
-    <h3 v-if="session">Calling <code>toSession()</code></h3>
+    <h3 v-if="session">You are logged in and authenticated!</h3>
     <div v-if="session" class="long">
       <p>
         Use the Ory SDK's <code>toSession()</code> call to receive the session
@@ -37,7 +38,7 @@
     <div v-if="apiResponse" class="long">
       <p>
         You can make authenticated calls to Minos API by sending the cookie to the test endpoint when the server is running <code>/demo</code>.
-        <br> If you are seeing this, it was successful and successfully authenticated.
+        <br> If you are seeing this you have successfully connected to Minos, and attempted authorization with the result shown below.
       <br>This will return 401 if it fails, if it succeeds it will return 200 with the following session object attached.
       </p>
       <pre><code data-testid='api-response'>{{ apiResponse }}</code></pre>
@@ -86,6 +87,7 @@ let login_flow_endpoint = basePath + '/self-service/login/browser';
 let register_flow_endpoint = basePath + '/self-service/registration/browser'
 let recover_flow_endpoint = basePath + '/self-service/recovery/browser'
 let settings_flow_endpoint = basePath + '/self-service/settings/browser' // this one redirects to login if necessary, otherwise creates a new session flow
+let verification_flow_endpoint = basePath + '/self-service/verification/browser' // this one redirects to login if necessary, otherwise creates a new session flow
 
 export default {
   name: "ory-kratos",
@@ -99,6 +101,7 @@ export default {
       register_flow_endpoint,
       recover_flow_endpoint,
       settings_flow_endpoint,
+      verification_flow_endpoint,
     }
   },
 
