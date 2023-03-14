@@ -59,6 +59,5 @@ pub async fn delete_all() -> Result<HttpResponse, ApiError> {
             .await?;
     }
 
-    // Get session from auth cookie. If this returns a session, there is indeed a session and the user is logged in.
     Ok(HttpResponse::Ok().json(identities))
 }
