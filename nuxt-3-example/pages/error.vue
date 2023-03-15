@@ -1,18 +1,15 @@
 <template>
   <div id="error">
-      {{ ory_ui_error }}
+    {{ oryUiError }}
   </div>
 </template>
 
 <script setup>
+const oryUiError = ref('Loading error...')
+const { $oryConfig } = useNuxtApp()
+const route = useRoute()
 
-let ory_ui_error = ref("Loading error...");
-let { $oryConfig } = useNuxtApp();
-let route = useRoute();
-
-
-$oryConfig.getFlowError({id:route.query.id}).then(r => {
-    ory_ui_error.value = r.data.error  // Just for demo here, display passed error json in display variable
-});
-
+$oryConfig.getFlowError({ id: route.query.id }).then((r) => {
+  oryUiError.value = r.data.error // Just for demo here, display passed error json in display variable
+})
 </script>
