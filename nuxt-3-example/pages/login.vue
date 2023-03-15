@@ -7,7 +7,7 @@
     </form>
 
     <li v-for="oryUiMsg in oryUiMsgs" :key="oryUiMsg">
-      {{ ory_ui_msg.text }}
+      {{ oryUiMsg.text }}
     </li>
 
     <form @submit.prevent="loginGithub">
@@ -38,6 +38,10 @@
       This is because Google does not allow signin with any account until the oauth app is reviewed
       and published.
     </p>
+
+    <NuxtLink to="/">Home page</NuxtLink>
+
+
   </div>
 </template>
 

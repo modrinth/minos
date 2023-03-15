@@ -47,9 +47,9 @@
     <h3 v-if="session">Common Actions</h3>
     <ul v-if="session">
       <li><a :href="logoutUrl" data-testid="logout">Logout</a></li>
-      <li>
-        <a :href="settingsFlowEndpoint" data-testid="settings">Settings</a>
-      </li>
+      <li><a :href="verificationFlowEndpoint" data-testid="verify">Verify email</a></li>
+
+      <li> <a :href="settingsFlowEndpoint" data-testid="settings">Settings</a></li>
     </ul>
   </div>
 </template>

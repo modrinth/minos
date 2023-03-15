@@ -6,13 +6,15 @@
     </form>
 
     <li v-for="oryUiMsg in oryUiMsgs" :key="oryUiMsg">
-      {{ ory_ui_msg.text }}
+      {{ oryUiMsg.text }}
     </li>
+
+    <NuxtLink to="/">Home page</NuxtLink>
   </div>
 </template>
 
 <script setup>
-import { extractNestedCsrfToken } from '~/helpers/ory-ui-extract'
+import { extractNestedCsrfToken, extractNestedErrorMessagesFromError } from '~/helpers/ory-ui-extract'
 
 const route = useRoute()
 const { $oryConfig } = useNuxtApp()

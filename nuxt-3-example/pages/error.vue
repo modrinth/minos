@@ -1,6 +1,9 @@
 <template>
   <div id="error">
     {{ oryUiError }}
+
+    <br>
+    <NuxtLink to="/">Home page</NuxtLink>
   </div>
 </template>
 
@@ -13,3 +16,4 @@ $oryConfig.getFlowError({ id: route.query.id }).then((r) => {
   oryUiError.value = r.data.error // Just for demo here, display passed error json in display variable
 })
 </script>
+

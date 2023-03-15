@@ -6,8 +6,11 @@
     </form>
 
     <li v-for="oryUiMsg in oryUiMsgs" :key="oryUiMsg">
-      {{ ory_ui_msg.text }}
+      {{ oryUiMsg.text }}
     </li>
+
+    <NuxtLink to="/">Home page</NuxtLink>
+
   </div>
 </template>
 
@@ -27,6 +30,7 @@ const code = ref('')
 $oryConfig.getVerificationFlow({ id: route.query.flow }).then((flow) => {
   const returnedNodes = flow.data.ui.nodes
   for (let i = 0; i < returnedNodes.length; i++) {
+    console.log(returnedNodes[i])
     if (returnedNodes[i].group === 'code' && returnedNodes[i].attributes.name === 'code') {
       code.value = returnedNodes[i].attributes.value
       break

@@ -10,13 +10,17 @@
     </form>
 
     <li v-for="oryUiMsg in oryUiMsgs" :key="oryUiMsg">
-      {{ ory_ui_msg.text }}
+      {{ oryUiMsg.text }}
     </li>
+
+    <NuxtLink to="/">Home page</NuxtLink>
+
+    
   </div>
 </template>
 
 <script setup>
-import { extractNestedCsrfToken } from '~/helpers/ory-ui-extract'
+import { extractNestedCsrfToken, extractNestedErrorMessagesFromError } from '~/helpers/ory-ui-extract'
 const { $oryConfig } = useNuxtApp()
 const route = useRoute()
 
@@ -55,7 +59,7 @@ async function recovery() {
 // Attempts to recover an account with the given 'email' and 'code' (sent to an email with the recovery() function)
 async function submitCode() {
   // Get recovery flow object from flow id parameter
-  const flowData = await $oryConfig.getRecoveryFlow({ id: this.route.query.flow })
+  const flowData = await $oryConfig.getRecoveryFlow({ id: route.query.flow })
 
   // Directly extract csrf_token from nested returned Ory UI elements
   const csrfToken = extractNestedCsrfToken(flowData.data)
@@ -63,10 +67,10 @@ async function submitCode() {
   // updateRecoveryFlow, but pass the 'code' field to attempt to recover using that code
   await $oryConfig
     .updateRecoveryFlow({
-      flow: this.route.query.flow,
+      flow: route.query.flow,
       updateRecoveryFlowBody: {
         csrf_token: csrfToken, // must be directly set
-        email: email.value, // MUST be an email identifier, not just a usernmae
+        // email: email.value, // MUST be an email identifier, not just a usernmae
         method: 'code',
         code: code.value,
       },
@@ -78,6 +82,14 @@ async function submitCode() {
       window.location.href = returnUrl
     })
     .catch((e) => {
+      // May return a 422: Unprocessable Entity error with a redirection link.
+      // We use this to continue the flow.
+      // TODO is this a bug?
+      if (e.response.status === 422) {
+        window.location.href = e.response.data.redirect_browser_to
+        return
+      }
+
       // Get displayable error messsages from nested returned Ory UI elements
       oryUiMsgs.value = extractNestedErrorMessagesFromError(e)
     })
