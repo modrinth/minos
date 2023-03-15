@@ -6,7 +6,7 @@
     </form>
     <form @submit.prevent="submitCode">
       <input v-model="code" placeholder="code" />
-      <input type="submit" value="recover using code and email" />
+      <input type="submit" value="recover using code" />
     </form>
 
     <li v-for="oryUiMsg in oryUiMsgs" :key="oryUiMsg">
@@ -84,7 +84,7 @@ async function submitCode() {
     .catch((e) => {
       // May return a 422: Unprocessable Entity error with a redirection link.
       // We use this to continue the flow.
-      // TODO is this a bug?
+      // (TODO: this is weird, is this a bug?)
       if (e.response.status === 422) {
         window.location.href = e.response.data.redirect_browser_to
         return

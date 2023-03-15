@@ -2,7 +2,7 @@
   <div id="verification">
     <form @submit.prevent="verification">
       <input v-model="code" placeholder="code" />
-      <input type="submit" value="verification code" />
+      <input type="submit" value="verify with code" />
     </form>
 
     <li v-for="oryUiMsg in oryUiMsgs" :key="oryUiMsg">

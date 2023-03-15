@@ -134,7 +134,7 @@ async function registerGeneric(registrationFlowBody) {
     .catch((e) => {
       // Using Social-integrated login/registration will return a 422: Unprocessable Entity error with a redirection link.
       // We use this to continue the flow.
-      // TODO is this a bug?
+      // (TODO: this is weird, is this a bug?)
       if (e.response.status === 422) {
         window.location.href = e.response.data.redirect_browser_to
         return
