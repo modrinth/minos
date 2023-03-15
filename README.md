@@ -6,11 +6,11 @@ Includes:
 - a Nuxt example that goes through the Ory login flow with customizable UI
 	- (There is a version for using Ory accounts, and a not-quite-finished version for hosting the Ory framework ourselves) 
 
-You can view the Actix readme [here](minos/README.md), and the Nuxt readme [here](nuxt-example/README.md).
+You can view the Actix readme [here](minos/README.md), and the Nuxt readme [here](nuxt-3-example/README.md).
 
 # Setup
 
-You can view the Actix setup [here](minos/README.md), and the Nuxt setup [here](nuxt-example/README.md).
+You can view the Actix setup [here](minos/README.md), and the Nuxt setup [here](nuxt-3-example/README.md).
 
 The Minos instance does not need to be running to go through the Nuxt flow. However, the Nuxt index page does attempt to make a call to the Minos API `/demo` endpoint to test if it is authenticated. If you are logged in (with a valid ory Session) and Minos is running, the call will be successful and a JSON representing the Session will be displayed on the Nuxt index page.
 
