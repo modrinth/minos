@@ -106,6 +106,7 @@ fn check_env_vars() -> bool {
 
     failed |= check_var::<String>("BIND_ADDR");
     failed |= check_var::<String>("ORY_URL");
+    failed |= check_var::<String>("ORY_AUTH_BEARER");
 
     failed
 }

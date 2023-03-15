@@ -28,8 +28,7 @@ pub struct Identity {
     id: String,
 }
 
-// TEMPORARY: DELETE THIS.
-// TODO
+// TEMPORARY ENDPOINT. TODO: DELETE THIS.
 // A temporary endpoint that deletes all users.
 // This should *only* be used for testing purpoes.
 #[get("delete_all")]
@@ -37,10 +36,7 @@ pub async fn delete_all() -> Result<HttpResponse, ApiError> {
     let client = reqwest::Client::new();
     let res = client
         .get("https://ecstatic-lehmann-onx4dw646f.projects.oryapis.com/admin/identities")
-        .header(
-            "Authorization",
-            "Bearer ory_pat_2eoYhi9J1D7F3TOuE9dGsNKpAOmubfqY",
-        )
+        .header("Authorization", dotenvy::var("ORY_AUTH_BEARER").unwrap())
         .send()
         .await?;
     let identities: Vec<Identity> = res.json().await?;
@@ -51,10 +47,7 @@ pub async fn delete_all() -> Result<HttpResponse, ApiError> {
                 "https://ecstatic-lehmann-onx4dw646f.projects.oryapis.com/admin/identities/{}",
                 identity.id
             ))
-            .header(
-                "Authorization",
-                "Bearer ory_pat_2eoYhi9J1D7F3TOuE9dGsNKpAOmubfqY",
-            )
+            .header("Authorization", dotenvy::var("ORY_AUTH_BEARER").unwrap())
             .send()
             .await?;
     }
