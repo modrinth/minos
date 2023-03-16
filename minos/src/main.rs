@@ -1,13 +1,12 @@
+mod auth;
 mod error;
 mod routes;
 mod util;
 
-use crate::util::env::{parse_strings_from_var, parse_var};
+use crate::{util::env::{parse_strings_from_var, parse_var}, auth::middleware::Authenticator};
 use actix_cors::Cors;
 use actix_web::{http, web, App, HttpServer};
 use log::{error, info, warn};
-use ory_client::apis::configuration::Configuration;
-use reqwest::Client;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -36,17 +35,6 @@ async fn main() -> std::io::Result<()> {
         std::env::set_var("RUST_BACKTRACE", "1");
     }
 
-    // Set up Ory configuration
-    let configuration = Configuration {
-        api_key: None,
-        base_path: dotenvy::var("ORY_URL").unwrap(),
-        client: Client::new(),
-        basic_auth: None,
-        user_agent: Some("Modrinth Minos authenticator".to_string()),
-        oauth_access_token: None,
-        bearer_access_token: None,
-    };
-
     // Start server
     info!("Starting Actix HTTP server!");
     HttpServer::new(move || {
@@ -69,9 +57,12 @@ async fn main() -> std::io::Result<()> {
                         http::header::CONTENT_TYPE,
                     ])
                     .supports_credentials()
-                    .max_age(3600),
+                    .max_age(3600)
+                    .allow_any_origin()
             )
-            .app_data(web::Data::new(configuration.clone()))
+
+            // Auth middleware: currently wraps all routes
+            .wrap(Authenticator )
             .service(routes::demo::demo_get)
             .service(routes::demo::delete_all)
             .wrap(sentry_actix::Sentry::new())
