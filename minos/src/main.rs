@@ -3,7 +3,10 @@ mod error;
 mod routes;
 mod util;
 
-use crate::{util::env::{parse_strings_from_var, parse_var}, auth::middleware::Authenticator};
+use crate::{
+    auth::middleware::Authenticator,
+    util::env::{parse_strings_from_var, parse_var},
+};
 use actix_cors::Cors;
 use actix_web::{http, web, App, HttpServer};
 use log::{error, info, warn};
@@ -58,11 +61,9 @@ async fn main() -> std::io::Result<()> {
                     ])
                     .supports_credentials()
                     .max_age(3600)
-                    .allow_any_origin()
             )
-
             // Auth middleware: currently wraps all routes
-            .wrap(Authenticator )
+            .wrap(Authenticator)
             .service(routes::demo::demo_get)
             .service(routes::demo::delete_all)
             .wrap(sentry_actix::Sentry::new())
