@@ -89,14 +89,9 @@ fetch(config.minosUrl + '/demo', {
   credentials: 'include',
 })
   .then((res) => {
-    console.log('Successfully made contact and authenticated with Minos!')
     res.json().then((res) => {
       apiResponse.value = res
     })
-  })
-  .catch((e) => {
-    console.log('Failed to authenticate with Minos!')
-    console.log(e.data)
   })
 </script>
 

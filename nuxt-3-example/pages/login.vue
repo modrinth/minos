@@ -118,11 +118,6 @@ async function loginGeneric(loginFlowBody) {
   // Directly extract csrf_token from nested returned Ory UI elements
   loginFlowBody.csrf_token = extractNestedCsrfToken(flowData.data)
 
-  console.log({
-    flow: route.query.flow,
-    updateLoginFlowBody: loginFlowBody,
-  })
-
   // Update login flow using passed method of choice
   await $oryConfig
     .updateLoginFlow({
@@ -130,8 +125,7 @@ async function loginGeneric(loginFlowBody) {
       updateLoginFlowBody: loginFlowBody,
     })
     .then(( _r ) => {
-      console.log('Successful login!')
-      
+    
       // If return_to exists, return to it, otherwise return to main page
       const returnUrl = flowData.data.return_to || config.nuxtUrl
       window.location.href = returnUrl

@@ -126,7 +126,6 @@ async function registerGeneric(registrationFlowBody) {
       updateRegistrationFlowBody: registrationFlowBody,
     })
     .then((_r) => {
-      console.log('Successfully register!')
       // If return_to exists, return to it, otherwise return to site main page
       const returnUrl = flowData.data.return_to || config.nuxtUrl
       window.location.href = returnUrl

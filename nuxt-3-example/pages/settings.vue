@@ -44,7 +44,6 @@ async function updatePassword() {
       },
     })
     .then((_r) => {
-      console.log('Successful pass change.')
       oryUiMsgs.value = [{ text: 'Successful pass change.' }]
     })
     .catch((e) => {

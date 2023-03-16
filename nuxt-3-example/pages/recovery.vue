@@ -47,7 +47,6 @@ async function recovery() {
       },
     })
     .then((_r) => {
-      console.log('Successful recovery - part 1')
       oryUiMsgs.value = [{ text: 'Sent recovery email.' }]
     })
     .catch((e) => {
@@ -76,7 +75,6 @@ async function submitCode() {
       },
     })
     .then((_r) => {
-      console.log('Successful recovery!')
       // If return_to exists, return to it, otherwise return to main page
       const returnUrl = flowData.data.return_to || nuxtUrl
       window.location.href = returnUrl

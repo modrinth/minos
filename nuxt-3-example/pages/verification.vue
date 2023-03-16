@@ -30,7 +30,6 @@ const code = ref('')
 $oryConfig.getVerificationFlow({ id: route.query.flow }).then((flow) => {
   const returnedNodes = flow.data.ui.nodes
   for (let i = 0; i < returnedNodes.length; i++) {
-    console.log(returnedNodes[i])
     if (returnedNodes[i].group === 'code' && returnedNodes[i].attributes.name === 'code') {
       code.value = returnedNodes[i].attributes.value
       break
@@ -57,7 +56,6 @@ async function verification() {
       },
     })
     .then((_r) => {
-      console.log('Successfully verified account!')
       oryUiMsgs.value = [{ text: 'Email successfully verified.' }]
       // Success! We can maybe then direct them to the login page?
     })
