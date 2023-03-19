@@ -2,17 +2,25 @@
 Modrinth authentication backend using Ory Kratos
 
 Includes:
-- a small Actix server that demos an authentication in a `/demo` endpoint (Minos)
+- a small Actix server that demos an authentication process in a middleware (Minos)
 - a Nuxt example that goes through the Ory login flow with customizable UI
-	- (There is a version for using Ory accounts, and a not-quite-finished version for hosting the Ory framework ourselves) 
 
 You can view the Actix readme [here](minos/README.md), and the Nuxt readme [here](nuxt-3-example/README.md).
 
 # Setup
 
-You can view the Actix setup [here](minos/README.md), and the Nuxt setup [here](nuxt-3-example/README.md).
 
-The Minos instance does not need to be running to go through the Nuxt flow. However, the Nuxt index page does attempt to make a call to the Minos API `/demo` endpoint to test if it is authenticated. If you are logged in (with a valid ory Session) and Minos is running, the call will be successful and a JSON representing the Session will be displayed on the Nuxt index page.
+
+For Minos, we are using the Ory self-hosted version.
+
+You can run this by running:
+
+- `docker-compose up` (or `docker-compose --build` if you need to rebuild the images).
+
+In addition, there's a `minos-kratos` docker compose file you can run if you only want Ory Kratos packages running. You will have to run Minos + the nuxt frontend separately if you do. You can view the Actix setup [here](minos/README.md), and the Nuxt setup [here](nuxt-3-example/README.md).
+
+- `docker-compose up --f docker-compose-kratos-only.yml`
+
 
 # Documentation
 
@@ -25,6 +33,20 @@ The skeleton here uses the @ory sdk. This let's us use the Ory endpoints a littl
 - [Quickstart with self-hosting](https://www.ory.sh/docs/kratos/quickstart)
 
 - [Ory Console](https://console.ory.sh/) (for managing an existing Ory project hosted on Ory)
+
+
+
+# Ports:
+
+- **4000: Minos Actix server.**
+- **4433: Kratos API**
+- 4434: Kratos admin API
+- 4436:4436: Mailslurper ports (for demoing email)
+- 4437:4437: Mailslurper ports (for demoing email)
+- **4455: Nuxt 3 webserver.**
+- 24678:24678: Nuxt communication port
+- 24679:24679: Nuxt communication port
+
 
 # Notes
 

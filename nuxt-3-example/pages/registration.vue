@@ -10,18 +10,18 @@
       {{ oryUiMsg.text }}
     </li>
 
-    <form @submit.prevent="registerGithub">
+    <!-- <form @submit.prevent="registerGithub">
       <input type="submit" value="register with github" />
-    </form>
+    </form> -->
     <form @submit.prevent="registerDiscord">
       <input type="submit" value="register with discord" />
     </form>
-    <form @submit.prevent="registerMicrosoft">
+    <!-- <form @submit.prevent="registerMicrosoft">
       <input type="submit" value="register with microsoft" />
     </form>
     <form @submit.prevent="registerGoogle">
       <input type="submit" value="register with google" />
-    </form>
+    </form> -->
 
     <p>
       Note: authorizing via google will only work for a couple accounts that I've preauthorized. (I
