@@ -16,17 +16,23 @@
 //  ...
 // }
 export function extractNestedErrorMessagesFromError(e) {
-          let errs = []
   if ('data' in e.response)
-    if ('messages' in e.response.data.ui) {
-      errs = errs.concat(e.response.data.ui.messages)
-    } else if ('nodes' in e.response.data.ui) {
-      // sometimes, formatted slightly differently
-      for (let i = 0; i < e.response.data.ui.nodes.length; i++) {
-        const node = e.response.data.ui.nodes[i]
-        errs = errs.concat(node.messages)
-      }
+  {
+    return extractNestedCsrfToken(e.response.data)
+  }
+  return []
+}
+export function extractNestedErrorMessagesFromData(data) {
+  let errs = []
+  if ('messages' in data.ui) {
+    errs = errs.concat(data.ui.messages)
+  } else if ('nodes' in data.ui) {
+    // sometimes, formatted slightly differently
+    for (let i = 0; i < data.ui.nodes.length; i++) {
+      const node = data.ui.nodes[i]
+      errs = errs.concat(node.messages)
     }
+  }
   return errs
 }
 

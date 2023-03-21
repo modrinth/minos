@@ -1,5 +1,8 @@
 <template>
-  <div id="registration">
+  <Suspense>
+  <div v-if="flowData" id="registration" >
+    Register for a new account.
+
     <form @submit.prevent="registerPassword">
       <input v-model="email" placeholder="email" />
       <input v-model="password" placeholder="password" type="password" />
@@ -40,21 +43,41 @@
     <NuxtLink to="/">Home page</NuxtLink>
 
   </div>
+</Suspense>
 </template>
 
 <script setup>
 import {
   extractNestedCsrfToken,
   extractNestedErrorMessagesFromError,
+  extractNestedErrorMessagesFromData
 } from '~/helpers/ory-ui-extract'
 
 const config = useRuntimeConfig()
 const route = useRoute()
 const { $oryConfig } = useNuxtApp()
 
-const oryUiMsgs = ref([{ text: 'Please register!' }])
+const oryUiMsgs = ref([])
 const email = ref('')
 const password = ref('')
+
+// Attempt to get flow information on page load
+const flowData = ref(null);
+$oryConfig.getRegistrationFlow({ id: route.query.flow || "" })
+.then( r =>  {
+  flowData.value = r.data;
+  oryUiMsgs.value = extractNestedErrorMessagesFromData(r.data)
+})
+// Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
+// Any other error we just leave the page
+.catch( e => {
+  if (e.response.status === 404)  {
+    window.location.href = config.oryUrl + '/self-service/registration/browser'
+  } else {
+    window.location.href = config.nuxtUrl;
+  }
+});
+
 
 async function registerPassword() {
   // There are several preset ways to identify people
@@ -65,7 +88,7 @@ async function registerPassword() {
   // These are differentiated by the traits obj
   // These are *separate* to social logins which get mapped to these presets.
   const registrationFlowBody = {
-    csrf_token: '', // set in generic function
+    csrf_token: extractNestedCsrfToken(flowData.value),
     method: 'password',
     password: password.value,
     'traits.email': email.value,
@@ -75,7 +98,7 @@ async function registerPassword() {
 async function registerGithub() {
   const registrationFlowBody = {
     // registrationFlowBody is an instance of UpdateRegistrationFlowWithOidcMethod
-    csrf_token: '', // set in generic function
+    csrf_token: extractNestedCsrfToken(flowData.value),
     method: 'oidc',
     provider: 'github',
   }
@@ -85,7 +108,7 @@ async function registerGithub() {
 async function registerDiscord() {
   const registrationFlowBody = {
     // registrationFlowBody is an instance of UpdateRegistrationFlowWithOidcMethod
-    csrf_token: '', // set in generic function
+    csrf_token: extractNestedCsrfToken(flowData.value),
     method: 'oidc',
     provider: 'discord',
   }
@@ -95,7 +118,7 @@ async function registerDiscord() {
 async function registerGoogle() {
   const registrationFlowBody = {
     // registrationFlowBody is an instance of UpdateRegistrationFlowWithOidcMethod
-    csrf_token: '', // set in generic function
+    csrf_token: extractNestedCsrfToken(flowData.value),
     method: 'oidc',
     provider: 'google',
   }
@@ -105,7 +128,7 @@ async function registerGoogle() {
 async function registerMicrosoft() {
   const registrationFlowBody = {
     // registrationFlowBody is an instance of UpdateRegistrationFlowWithOidcMethod
-    csrf_token: '', // set in generic function
+    csrf_token: extractNestedCsrfToken(flowData.value),
     method: 'oidc',
     provider: 'microsoft',
   }
@@ -114,12 +137,6 @@ async function registerMicrosoft() {
 
 // loginFlowBody must match a variant of UpdateLoginFlowWith<method>Method (included are UpdateLoginFlowWithOidcMethod | UpdateLoginFlowWithPasswordMethod)
 async function registerGeneric(registrationFlowBody) {
-  // Get registration flow object from flow id parameter
-  const flowData = await $oryConfig.getRegistrationFlow({ id: route.query.flow })
-
-  // Directly extract csrf_token from nested returned Ory UI elements
-  registrationFlowBody.csrf_token = extractNestedCsrfToken(flowData.data)
-
   // Update registration flow using passed method of choice
   await $oryConfig
     .updateRegistrationFlow({
@@ -128,7 +145,7 @@ async function registerGeneric(registrationFlowBody) {
     })
     .then((_r) => {
       // If return_to exists, return to it, otherwise return to site main page
-      const returnUrl = flowData.data.return_to || config.nuxtUrl
+      const returnUrl = flowData.value.return_to || config.nuxtUrl
       window.location.href = returnUrl
     })
     .catch((e) => {
