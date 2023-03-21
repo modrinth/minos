@@ -12,8 +12,7 @@ COPY package.json ./
 
 COPY yarn.lock ./
 
-# rebuild node-sass
-RUN yarn add node-sass
+# RUN npm install
 
 RUN yarn
 
