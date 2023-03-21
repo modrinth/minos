@@ -24,6 +24,8 @@ To setup using the Ory-hosted backend and this repo:.
 6. In this folder (in another window), `yarn dev` to start Nuxt
 7. Go to `localhost:4455`, and test!
 
+Note: we are not using this method, but are doing the self-hosted method. The Ory-hosted version is useful for configuration and testing, though.
+
 # Ory Account
 
 - I currently have an Ory account designed for use with the local flow shown above (with the tunnel and so on). I can add emails so we can collaborate on the same one (both for testing and if we decide to use this method).
