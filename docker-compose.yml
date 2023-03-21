@@ -23,6 +23,14 @@ services:
     environment:
     - SELFSERVICE_METHODS_OIDC_CONFIG_PROVIDERS_0_CLIENT_ID
     - SELFSERVICE_METHODS_OIDC_CONFIG_PROVIDERS_0_CLIENT_SECRET
+    - SELFSERVICE_METHODS_OIDC_CONFIG_PROVIDERS_1_CLIENT_ID
+    - SELFSERVICE_METHODS_OIDC_CONFIG_PROVIDERS_1_CLIENT_SECRET
+    - SELFSERVICE_METHODS_OIDC_CONFIG_PROVIDERS_2_CLIENT_ID
+    - SELFSERVICE_METHODS_OIDC_CONFIG_PROVIDERS_2_CLIENT_SECRET
+    - SELFSERVICE_METHODS_OIDC_CONFIG_PROVIDERS_3_CLIENT_ID
+    - SELFSERVICE_METHODS_OIDC_CONFIG_PROVIDERS_3_CLIENT_SECRET
+    - SELFSERVICE_METHODS_OIDC_CONFIG_PROVIDERS_4_CLIENT_ID
+    - SELFSERVICE_METHODS_OIDC_CONFIG_PROVIDERS_4_CLIENT_SECRET
     - DSN=sqlite:///var/lib/sqlite/db.sqlite?_fk=true
     - LOG_LEVEL=trace
     ports:
@@ -50,6 +58,18 @@ services:
       - "4455:4455"
       - "24678:24678"
       - "24679:24679"
+  #### Comment the 'pasiphae' block, and uncomment this, to use default Ory UI
+  # kratos-selfservice-ui-node:
+  #   image: oryd/kratos-selfservice-ui-node:v0.11.1
+  #   ports:
+  #     - "4455:4455"
+  #   environment:
+  #     - PORT=4455
+  #     - SECURITY_MODE=
+  #     - KRATOS_PUBLIC_URL=http://kratos:4433/
+  #     - KRATOS_BROWSER_URL=http://127.0.0.1:4433/
+  #   restart: on-failure
+
   minos: 
     build: minos
     ports: 

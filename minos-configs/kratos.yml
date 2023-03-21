@@ -12,6 +12,7 @@ serve:
         - http://127.0.0.1:4455
         - http://localhost:4455
         - http://0.0.0.0:4455
+        - https://github.com
       allowed_methods:
         - POST
         - GET
@@ -61,7 +62,44 @@ selfservice:
               id_token:
                 email:
                 email_verified:
-
+          - id: github
+            provider: github
+            client_id: ""
+            client_secret: ""
+            mapper_url: file:///etc/config/kratos/oidc.github.jsonnet
+            scope:
+              - user:email
+            requested_claims:
+              id_token:
+                email:
+                email_verified:
+          - id: google
+            provider: google
+            client_id: ""
+            client_secret: ""
+            mapper_url: file:///etc/config/kratos/oidc.google.jsonnet
+            scope:
+              - email
+              - profile
+            requested_claims:
+              id_token:
+                email:
+                email_verified:
+          - id: microsoft
+            provider: microsoft
+            client_id: ""
+            client_secret: ""
+            mapper_url: file:///etc/config/kratos/oidc.microsoft.jsonnet
+            scope:
+              - email
+              - profile
+            microsoft_tenant: common
+            subject_source: userinfo
+            requested_claims:
+              id_token:
+                email:
+                email_verified:
+        base_redirect_uri: http://127.0.0.1:4433
 
   flows:
     error:

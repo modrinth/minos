@@ -10,21 +10,20 @@
       {{ oryUiMsg.text }}
     </li>
 
-    <!-- <form @submit.prevent="loginGithub">
-      <input type="submit" value="log in with github" />
-    </form> -->
-
     <form @submit.prevent="loginDiscord">
       <input type="submit" value="log in with discord" />
     </form>
-<!-- 
-    <form @submit.prevent="loginMicrosoft">
-      <input type="submit" value="log in with microsoft" />
+  
+   <form @submit.prevent="loginGithub">
+      <input type="submit" value="log in with github" />
     </form>
-
     <form @submit.prevent="loginGoogle">
       <input type="submit" value="log in with google" />
-    </form> -->
+    </form> 
+    <form @submit.prevent="loginMicrosoft">
+      <input type="submit" value="log in with microsoft (requires https redirect uri)" />
+    </form>
+ 
 
     <p>
       Note: authorizing via google will only work for a couple accounts that I've preauthorized. (I
