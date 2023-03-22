@@ -1,10 +1,35 @@
-use crate::auth::AuthError;
+use crate::auth::{AuthError, middleware::Authenticator};
+use actix_web::web;
 use thiserror::Error;
 
 pub mod demo;
+pub mod import;
 pub mod not_found;
 
 pub use not_found::not_found;
+
+// User routes
+// Protected by auth middleware
+pub fn user_config(cfg: &mut web::ServiceConfig){
+    cfg.service(
+        web::scope("user")
+        .service(demo::demo_get)            
+        .wrap(Authenticator) // Auth middleware
+
+    );
+}
+
+// Admin routes
+// Interface directly to Ory API
+// Requires admin Bearer token to be passed to access these
+pub fn admin_config(cfg: &mut web::ServiceConfig){
+    cfg.service(
+        web::scope("admin")
+        .service(import::import_account)
+        .service(demo::delete_all)
+    );
+}
+
 
 #[derive(Error, Debug)]
 pub enum ApiError {

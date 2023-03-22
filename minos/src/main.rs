@@ -4,7 +4,6 @@ mod routes;
 mod util;
 
 use crate::{
-    auth::middleware::Authenticator,
     util::env::{parse_strings_from_var, parse_var},
 };
 use actix_cors::Cors;
@@ -62,10 +61,8 @@ async fn main() -> std::io::Result<()> {
                     .supports_credentials()
                     .max_age(3600)
             )
-            // Auth middleware: currently wraps all routes
-            .wrap(Authenticator)
-            .service(routes::demo::demo_get)
-            .service(routes::demo::delete_all)
+            .configure(routes::user_config)
+            .configure(routes::admin_config)
             .wrap(sentry_actix::Sentry::new())
             .default_service(web::get().to(routes::not_found))
     })
