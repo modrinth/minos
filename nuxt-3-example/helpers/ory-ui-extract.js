@@ -18,21 +18,31 @@
 export function extractNestedErrorMessagesFromError(e) {
   if ('data' in e.response)
   {
-    return extractNestedCsrfToken(e.response.data)
+    return extractNestedErrorMessagesFromData(e.response.data)
   }
   return []
 }
 export function extractNestedErrorMessagesFromData(data) {
   let errs = []
+  console.log("start")
+  console.log(errs)
+
   if ('messages' in data.ui) {
     errs = errs.concat(data.ui.messages)
+    console.log("fesfaesfse")
+    console.log(errs)
+
   } else if ('nodes' in data.ui) {
+    console.log("eeee")
+
     // sometimes, formatted slightly differently
     for (let i = 0; i < data.ui.nodes.length; i++) {
-      const node = data.ui.nodes[i]
+      console.log(JSON.stringify(data.ui.nodes[i]))
+    const node = data.ui.nodes[i]
       errs = errs.concat(node.messages)
     }
   }
+  console.log(errs)
   return errs
 }
 

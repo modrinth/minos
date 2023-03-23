@@ -1,5 +1,4 @@
 <template>
-  <Suspense>
   <div v-if="flowData" id="registration" >
     Register for a new account.
 
@@ -43,7 +42,6 @@
     <NuxtLink to="/">Home page</NuxtLink>
 
   </div>
-</Suspense>
 </template>
 
 <script setup>
