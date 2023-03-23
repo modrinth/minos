@@ -19,9 +19,11 @@ You can run this by running:
 
 --- 
 
-In addition, there's a `minos-kratos` docker compose file you can run if you only want Ory Kratos packages running. You will have to run Minos + the nuxt frontend separately if you do. You can view the Actix setup [here](minos/README.md), and the Nuxt setup [here](nuxt-3-example/README.md).
+In addition, there's a `kratos-only` docker compose file you can run if you only want Ory Kratos packages running. You will have to run Minos + the nuxt frontend separately if you do. You can view the Actix setup [here](minos/README.md), and the Nuxt setup [here](nuxt-3-example/README.md).
 
 - `docker-compose up --f docker-compose-kratos-only.yml`
+
+- If you use the `kratos-only` version, you will likely not be able to access the admin console for Ory through Nuxt/Rust, as they are no longer part of the docker-compose and the admin ports are not exposed publically. If you are testing and require access, you can change the .env variable to access `127.0.0.1:` instead of `kratos:` and also uncomment the admin port in `docker-compose-kratos-only.yml` to expose it.
 
 - To reset the volumes & database, use `docker-compose down -v`
 
