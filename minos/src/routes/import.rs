@@ -1,15 +1,17 @@
 use crate::routes::ApiError;
 use actix_web::{post, web, HttpResponse};
+use futures::future::try_join_all;
 use ory_client::apis::identity_api::create_identity;
-use ory_client::models::{self, CreateIdentityBody};
+use ory_client::models::{self, CreateIdentityBody, Identity};
 use ory_client::{self, apis::configuration::Configuration};
 use serde::{Deserialize, Serialize};
 
 use super::OryError;
-
-#[derive(Serialize, Debug)]
-pub struct ImportedUserTraits {
-    pub email: String,
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(untagged)]
+pub enum ImportUsers {
+    NewUser(NewUserData),
+    NewUsers(Vec<NewUserData>)
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -30,13 +32,18 @@ pub struct UserDataPassword {
     pub hashed_password: String,
 }
 
+#[derive(Serialize, Debug)]
+pub struct ImportedUserTraits<'a> {
+    pub email: &'a str,
+}
+
+
+
 // POST /admin/import_account
 // Requires admin bearer token as header.
-// Add account manually
-// Input is body matching:
 /*
-   Add account manually
-   Input is body matching:
+    Add account manually
+    Input is *one account* or an *array* of accounts, where each account has body matching:
    {
        email: "",
        provider: "",
@@ -53,31 +60,46 @@ pub struct UserDataPassword {
 #[post("import_account")]
 pub async fn import_account(
     configuration: web::Data<Configuration>,
-    data: web::Json<NewUserData>,
+    data: web::Json<ImportUsers>,
 ) -> Result<HttpResponse, ApiError> {
     let data = data.into_inner();
+    match data {
+        ImportUsers::NewUser(user) => {
+            let res = import_account_helper(&user, &configuration).await?;
+            Ok(HttpResponse::Ok().json(res))
+        },
+        ImportUsers::NewUsers(users) => {
+            let res = users.iter().map(|u| {
+                import_account_helper(u, &configuration)
+            });
+            let res = try_join_all(res).await?;
+            Ok(HttpResponse::Ok().json(res))
+        }
+    }
+}
 
+async fn import_account_helper(data: &NewUserData, configuration: &Configuration) -> Result<Identity, ApiError>{
     // Create importable user in required Ory Kratos format
     let create_identity_body = match data {
         NewUserData::NewUserDataOidc(user) => {
-            build_oidc(user.email, vec![(user.provider, user.subject)])
+            build_oidc(&user.email, vec![(&user.provider, &user.subject)])
         }
-        NewUserData::NewUserDataPassword(user) => build_password(user.email, user.hashed_password),
+        NewUserData::NewUserDataPassword(user) => build_password(&user.email, &user.hashed_password),
     }?;
     let res = create_identity(&configuration, Some(&create_identity_body))
         .await
         .map_err(|e| OryError::from(e))?;
-    Ok(HttpResponse::Ok().json(res))
+    Ok(res)
 }
 
-fn build_password(email: String, hashed_password: String) -> Result<CreateIdentityBody, OryError> {
+fn build_password(email: &str, hashed_password: &str) -> Result<CreateIdentityBody, OryError> {
     let mut create_identity_body = CreateIdentityBody::new(
         "default".to_string(),
-        serde_json::to_value(ImportedUserTraits { email })?,
+        serde_json::to_value(ImportedUserTraits { email: &email })?,
     );
     // Create credentials and add it to identity body
     let credentials_pass_config = models::IdentityWithCredentialsPasswordConfig {
-        hashed_password: Some(hashed_password),
+        hashed_password: Some(hashed_password.to_string()),
         password: None,
     };
     let credentials_pass = models::IdentityWithCredentialsPassword {
@@ -94,8 +116,8 @@ fn build_password(email: String, hashed_password: String) -> Result<CreateIdenti
 }
 
 fn build_oidc(
-    email: String,
-    provider_subjects: Vec<(String, String)>,
+    email: &str,
+    provider_subjects: Vec<(&str, &str)>,
 ) -> Result<CreateIdentityBody, OryError> {
     let mut create_identity_body = CreateIdentityBody::new(
         "default".to_string(),
@@ -107,8 +129,8 @@ fn build_oidc(
         .into_iter()
         .map(
             |(provider, subject)| models::IdentityWithCredentialsOidcConfigProvider {
-                provider,
-                subject,
+                provider: provider.to_string(),
+                subject: subject.to_string(),
             },
         )
         .collect();
