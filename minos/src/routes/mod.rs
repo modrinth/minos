@@ -3,6 +3,7 @@ use crate::{
     error,
 };
 use actix_web::web;
+use actix_web_httpauth::middleware::HttpAuthentication;
 use thiserror::Error;
 
 pub mod demo;
@@ -28,7 +29,10 @@ pub fn admin_config(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("admin")
             .service(import::import_account)
-            .service(demo::delete_all),
+            .service(demo::delete_all)
+            .wrap(HttpAuthentication::bearer(
+                crate::auth::middleware::admin_validator,
+            )),
     );
 }
 
