@@ -6,6 +6,7 @@ use actix_web::web;
 use actix_web_httpauth::middleware::HttpAuthentication;
 use thiserror::Error;
 
+pub mod delete;
 pub mod demo;
 pub mod import;
 pub mod not_found;
@@ -29,7 +30,7 @@ pub fn admin_config(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("admin")
             .service(import::import_account)
-            .service(demo::delete_all)
+            .service(delete::delete_all)
             .wrap(HttpAuthentication::bearer(
                 crate::auth::middleware::admin_validator,
             )),
@@ -85,6 +86,14 @@ pub enum OryError {
     #[error("Create Identity error: {0}")]
     CreateIdentityError(
         #[from] ory_client::apis::Error<ory_client::apis::identity_api::CreateIdentityError>,
+    ),
+    #[error("List Identity error: {0}")]
+    ListIdentitiesError(
+        #[from] ory_client::apis::Error<ory_client::apis::identity_api::ListIdentitiesError>,
+    ),
+    #[error("Delete Identity error: {0}")]
+    DeleteIdentityError(
+        #[from] ory_client::apis::Error<ory_client::apis::identity_api::DeleteIdentityError>,
     ),
     #[error("Error while deserializing: {0}")]
     JSON(#[from] serde_json::Error),

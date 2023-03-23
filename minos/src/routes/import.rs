@@ -30,6 +30,8 @@ pub struct UserDataPassword {
     pub hashed_password: String,
 }
 
+// POST /admin/import_account
+// Requires admin bearer token as header.
 // Add account manually
 // Input is body matching:
 /*
