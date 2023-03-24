@@ -1,4 +1,4 @@
-use actix_web::{web, HttpResponse, delete};
+use actix_web::{delete, web, HttpResponse};
 use futures::future::try_join_all;
 use ory_client::apis::configuration::Configuration;
 use ory_client::apis::identity_api;

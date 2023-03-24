@@ -51,7 +51,7 @@ The skeleton here uses the @ory sdk. This let's us use the Ory endpoints a littl
 - **4000: Minos Actix server.**
 - **4433: Kratos API**
 - 4434: Kratos admin API
-- 4436:4436: Mailslurper ports (for demoing email)
+- **4436: Mailslurper ports (for demoing email)**
 - 4437:4437: Mailslurper ports (for demoing email)
 - **4455: Nuxt 3 webserver.**
 - 24678:24678: Nuxt communication port

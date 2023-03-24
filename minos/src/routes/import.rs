@@ -11,7 +11,7 @@ use super::OryError;
 #[serde(untagged)]
 pub enum ImportUsers {
     NewUser(NewUserData),
-    NewUsers(Vec<NewUserData>)
+    NewUsers(Vec<NewUserData>),
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -36,8 +36,6 @@ pub struct UserDataPassword {
 pub struct ImportedUserTraits<'a> {
     pub email: &'a str,
 }
-
-
 
 // POST /admin/import_account
 // Requires admin bearer token as header.
@@ -67,24 +65,29 @@ pub async fn import_account(
         ImportUsers::NewUser(user) => {
             let res = import_account_helper(&user, &configuration).await?;
             Ok(HttpResponse::Ok().json(res))
-        },
+        }
         ImportUsers::NewUsers(users) => {
-            let res = users.iter().map(|u| {
-                import_account_helper(u, &configuration)
-            });
+            let res = users
+                .iter()
+                .map(|u| import_account_helper(u, &configuration));
             let res = try_join_all(res).await?;
             Ok(HttpResponse::Ok().json(res))
         }
     }
 }
 
-async fn import_account_helper(data: &NewUserData, configuration: &Configuration) -> Result<Identity, ApiError>{
+async fn import_account_helper(
+    data: &NewUserData,
+    configuration: &Configuration,
+) -> Result<Identity, ApiError> {
     // Create importable user in required Ory Kratos format
     let create_identity_body = match data {
         NewUserData::NewUserDataOidc(user) => {
             build_oidc(&user.email, vec![(&user.provider, &user.subject)])
         }
-        NewUserData::NewUserDataPassword(user) => build_password(&user.email, &user.hashed_password),
+        NewUserData::NewUserDataPassword(user) => {
+            build_password(&user.email, &user.hashed_password)
+        }
     }?;
     let res = create_identity(&configuration, Some(&create_identity_body))
         .await
