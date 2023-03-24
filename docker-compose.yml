@@ -55,7 +55,7 @@ services:
       - '4437:4437'
   pasiphae:
     build:
-      context: nuxt-3-example
+      context: pasiphae
     ports: 
       - "4455:4455"
       - "24678:24678"

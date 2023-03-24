@@ -5,7 +5,7 @@ Includes:
 - a small Actix server that demos an authentication process in a middleware (Minos)
 - a Nuxt example that goes through the Ory login flow with customizable UI
 
-You can view the Actix readme [here](minos/README.md), and the Nuxt readme [here](nuxt-3-example/README.md).
+You can view the Actix readme [here](minos/README.md), and the Nuxt readme [here](pasiphae/README.md).
 
 # Setup
 
@@ -19,7 +19,7 @@ You can run this by running:
 
 --- 
 
-In addition, there's a `kratos-only` docker compose file you can run if you only want Ory Kratos packages running. You will have to run Minos + the nuxt frontend separately if you do. You can view the Actix setup [here](minos/README.md), and the Nuxt setup [here](nuxt-3-example/README.md).
+In addition, there's a `kratos-only` docker compose file you can run if you only want Ory Kratos packages running. You will have to run Minos + the nuxt frontend separately if you do. You can view the Actix setup [here](minos/README.md), and the Nuxt setup [here](pasiphae/README.md).
 
 - `docker-compose up --f docker-compose-kratos-only.yml`
 
