@@ -18,7 +18,7 @@
 export function extractNestedErrorMessagesFromError(e) {
   if ('data' in e.response)
   {
-    return extractNestedCsrfToken(e.response.data)
+    return extractNestedErrorMessagesFromData(e.response.data)
   }
   return []
 }
@@ -29,7 +29,7 @@ export function extractNestedErrorMessagesFromData(data) {
   } else if ('nodes' in data.ui) {
     // sometimes, formatted slightly differently
     for (let i = 0; i < data.ui.nodes.length; i++) {
-      const node = data.ui.nodes[i]
+    const node = data.ui.nodes[i]
       errs = errs.concat(node.messages)
     }
   }

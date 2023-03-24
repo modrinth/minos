@@ -35,7 +35,7 @@ services:
     - LOG_LEVEL=trace
     ports:
       - '4433:4433' # public
-      - '4434:4434' # admin
+      # - '4434:4434' # admin can be uncommented for testing- but should be removed in prod.
     restart: unless-stopped
     command: serve -c /etc/config/kratos/kratos.yml --dev --watch-courier
     volumes:
