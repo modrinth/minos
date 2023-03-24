@@ -7,7 +7,7 @@ use actix_web_httpauth::middleware::HttpAuthentication;
 use thiserror::Error;
 
 pub mod delete;
-pub mod demo;
+pub mod user;
 pub mod import;
 pub mod not_found;
 
@@ -18,7 +18,7 @@ pub use not_found::not_found;
 pub fn user_config(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("user")
-            .service(demo::demo_get)
+            .service(user::user_get)
             .wrap(Authenticator), // Auth middleware
     );
 }

@@ -102,9 +102,10 @@ async fn get_authenticated_session(
     Ok(session)
 }
 
+// Admin API requests need Bearer matching ORY_AUTH_BEARER
 pub async fn admin_validator(
     req: ServiceRequest,
-    credentials: BearerAuth, // ) -> Result <ServiceRequest, (Error, ServiceRequest)> {
+    credentials: BearerAuth,
 ) -> Result<ServiceRequest, (Error, ServiceRequest)> {
     let config = req
         .app_data::<bearer::Config>()
@@ -114,8 +115,6 @@ pub async fn admin_validator(
     if credentials.token() == dotenvy::var("ORY_AUTH_BEARER").unwrap() {
         Ok(req)
     } else {
-        // Ok(req)
         Err((AuthenticationError::from(config).into(), req))
-        // Err((AuthenticationError::From(config).into(), req))
     }
 }
