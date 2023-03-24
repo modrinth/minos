@@ -99,6 +99,37 @@ selfservice:
               id_token:
                 email:
                 email_verified:
+          - id: apple
+            provider: apple
+            client_id: ""
+            client_secret: ""
+            apple_team_id: ""
+            apple_private_key_id: ""
+            apple_private_key: ""
+            mapper_url: file:///etc/config/kratos/oidc.apple.jsonnet
+            scope:
+              - email
+              - profile
+            requested_claims:
+              id_token:
+                email:
+                email_verified:                
+          - id: gitlab
+            provider: gitlab
+            client_id: ""
+            client_secret: ""
+            mapper_url: file:///etc/config/kratos/oidc.gitlab.jsonnet
+            scope:
+              - email
+              - profile
+              - read_user
+              - openid
+            requested_claims:
+              id_token:
+                email:
+                email_verified:
+
+
         base_redirect_uri: http://127.0.0.1:4433
 
   flows:
