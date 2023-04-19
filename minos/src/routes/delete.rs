@@ -16,7 +16,7 @@ pub async fn delete_all(configuration: web::Data<Configuration>) -> Result<HttpR
     // Fetch all identities
     let identities: Vec<Identity> = identity_api::list_identities(&configuration, None, None, None)
         .await
-        .map_err(|e| OryError::from(e))?;
+        .map_err(OryError::from)?;
 
     // Delete identities (using concurrency)
     let identity_futures = identities
@@ -24,6 +24,6 @@ pub async fn delete_all(configuration: web::Data<Configuration>) -> Result<HttpR
         .map(|i| identity_api::delete_identity(&configuration, &i.id));
     try_join_all(identity_futures)
         .await
-        .map_err(|e| OryError::from(e))?;
+        .map_err(OryError::from)?;
     Ok(HttpResponse::Ok().json(identities))
 }

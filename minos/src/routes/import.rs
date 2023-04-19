@@ -1,3 +1,5 @@
+
+use crate::database::models::labrinth_user::LabrinthUser;
 use crate::routes::ApiError;
 use actix_web::{post, web, HttpResponse};
 use futures::future::try_join_all;
@@ -5,6 +7,7 @@ use ory_client::apis::identity_api::create_identity;
 use ory_client::models::{self, CreateIdentityBody, Identity};
 use ory_client::{self, apis::configuration::Configuration};
 use serde::{Deserialize, Serialize};
+use sqlx::PgPool;
 
 use super::OryError;
 #[derive(Serialize, Deserialize, Debug)]
@@ -20,6 +23,7 @@ pub enum NewUserData {
     NewUserDataOidc(UserDataOidc),
     NewUserDataPassword(UserDataPassword),
 }
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UserDataOidc {
     pub email: String,
@@ -36,6 +40,7 @@ pub struct UserDataPassword {
 pub struct ImportedUserTraits<'a> {
     pub email: &'a str,
 }
+
 
 // POST /admin/import_account
 // Requires admin bearer token as header.
@@ -89,16 +94,16 @@ async fn import_account_helper(
             build_password(&user.email, &user.hashed_password)
         }
     }?;
-    let res = create_identity(&configuration, Some(&create_identity_body))
+    let res = create_identity(configuration, Some(&create_identity_body))
         .await
-        .map_err(|e| OryError::from(e))?;
+        .map_err(OryError::from)?;
     Ok(res)
 }
 
 fn build_password(email: &str, hashed_password: &str) -> Result<CreateIdentityBody, OryError> {
     let mut create_identity_body = CreateIdentityBody::new(
         "default".to_string(),
-        serde_json::to_value(ImportedUserTraits { email: &email })?,
+        serde_json::to_value(ImportedUserTraits { email })?,
     );
     // Create credentials and add it to identity body
     let credentials_pass_config = models::IdentityWithCredentialsPasswordConfig {
@@ -151,4 +156,29 @@ fn build_oidc(
     create_identity_body.credentials = Some(Box::new(credentials));
 
     Ok(create_identity_body)
+}
+
+
+// POST pull_labrinth
+// Requires admin bearer token as header.
+#[post("pull_labrinth")]
+pub async fn pull_labrinth_github_accounts(
+    configuration: web::Data<Configuration>,
+    pool: web::Data<PgPool>,
+
+) -> Result<HttpResponse, ApiError> {
+    let _client = reqwest::Client::new();
+    
+    let users = LabrinthUser::get_all(        &**pool, ).await?;
+    let users : Vec<_> = users.into_iter().filter_map(|lu| {
+        Some(NewUserData::NewUserDataOidc(UserDataOidc {
+            email: lu.email?,
+            provider: "github".to_string(),
+            subject: lu.github_id?.to_string(),
+        }))
+    }).collect();
+    
+    let res = users.iter().map(|f| import_account_helper(f, &configuration));
+    let res = try_join_all(res).await?;
+    Ok(HttpResponse::Ok().json(res))
 }

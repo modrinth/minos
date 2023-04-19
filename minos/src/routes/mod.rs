@@ -51,6 +51,8 @@ pub enum ApiError {
     SessionError,
     #[error("Reqwest error: {0}")]
     Reqwest(#[from] reqwest::Error),
+    #[error("Sqlx error: {0}")]
+    Sqlx(#[from] sqlx::Error),
 }
 
 impl actix_web::ResponseError for ApiError {
@@ -61,6 +63,7 @@ impl actix_web::ResponseError for ApiError {
             ApiError::Ory(..) => actix_web::http::StatusCode::BAD_REQUEST,
             ApiError::SessionError => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::Reqwest(..) => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::Sqlx(..) => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
 
             ApiError::Unauthorized(..) => actix_web::http::StatusCode::BAD_REQUEST,
         }
@@ -73,6 +76,7 @@ impl actix_web::ResponseError for ApiError {
                 ApiError::Ory(..) => "invalid_input",
                 ApiError::SessionError => "internal_error",
                 ApiError::Reqwest(..) => "internal_error",
+                ApiError::Sqlx(..) => "internal_error",
 
                 ApiError::Unauthorized(..) => "unauthorized",
             },

@@ -1,9 +1,10 @@
 mod auth;
+mod database;
 mod error;
 mod routes;
 mod util;
 
-use crate::util::env::{parse_strings_from_var, parse_var};
+use crate::{util::env::{parse_strings_from_var, parse_var}, database::labrinth_database};
 use actix_cors::Cors;
 use actix_web::{http, web, App, HttpServer};
 use log::{error, info, warn};
@@ -34,6 +35,11 @@ async fn main() -> std::io::Result<()> {
         oauth_access_token: None,
         bearer_access_token: None,
     };
+
+    // Labrinth Database Connector
+    let _pool = labrinth_database::connect()
+    .await
+    .expect("Database connection failed");
 
     // Set up Sentry watching for errors
     let sentry = sentry::init(sentry::ClientOptions {
@@ -109,6 +115,8 @@ fn check_env_vars() -> bool {
     failed |= check_var::<String>("BIND_ADDR");
     failed |= check_var::<String>("ORY_URL");
     failed |= check_var::<String>("ORY_AUTH_BEARER");
+
+    failed |= check_var::<String>("DATABASE_URL");
 
     failed
 }
