@@ -186,7 +186,7 @@ secrets:
 ciphers:
   algorithm: xchacha20-poly1305
 
-hashers:
+hashers:  
   algorithm: bcrypt
   bcrypt:
     cost: 8
@@ -199,4 +199,7 @@ identity:
 
 courier:
   smtp:
-    connection_uri: smtps://test:test@mailslurper:1025/?skip_ssl_verify=true
+    connection_uri: ""
+    from_address: no-reply@mail.modrinth.com
+    from_name: Modrinth
+  template_override_path:  /etc/config/kratos/mail-templates
