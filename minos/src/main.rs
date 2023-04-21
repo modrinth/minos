@@ -42,6 +42,7 @@ async fn main() -> std::io::Result<()> {
     let configuration = Configuration {
         api_key: None,
         base_path: dotenvy::var("ORY_URL").unwrap(),
+        client: Client::new(),
         basic_auth: None,
         user_agent: Some("Modrinth Minos".to_string()),
         oauth_access_token: None,
