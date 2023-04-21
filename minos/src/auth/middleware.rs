@@ -5,6 +5,8 @@ use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Tr
 use actix_web::{Error, HttpMessage};
 use actix_web_httpauth::extractors::bearer::BearerAuth;
 use actix_web_httpauth::extractors::{bearer, AuthenticationError};
+use actix_web_httpauth::extractors::bearer::BearerAuth;
+use actix_web_httpauth::extractors::{bearer, AuthenticationError};
 use futures::future::{ready, LocalBoxFuture, Ready};
 use futures::FutureExt;
 use http::header::COOKIE;
@@ -112,11 +114,6 @@ pub async fn admin_validator(
         .cloned()
         .unwrap_or_default();
 
-    println!(
-        "{} {}",
-        credentials.token(),
-        dotenvy::var("ORY_AUTH_BEARER").unwrap()
-    );
     if credentials.token() == dotenvy::var("ORY_AUTH_BEARER").unwrap() {
         Ok(req)
     } else {

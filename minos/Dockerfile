@@ -20,3 +20,9 @@ FROM debian:buster-slim
 RUN apt-get update && apt-get install -y openssl libssl1.1 && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /usr/local/cargo/bin/minos /usr/local/bin/minos
 CMD ["minos"]
+FROM rust:1.67 as builder
+WORKDIR /usr/src/minos
+COPY . .
+RUN cargo install --path .
+
+CMD ["minos"]

@@ -4,9 +4,12 @@ mod routes;
 mod util;
 
 use crate::util::env::{parse_strings_from_var, parse_var};
+use crate::util::env::{parse_strings_from_var, parse_var};
 use actix_cors::Cors;
 use actix_web::{http, web, App, HttpServer};
 use log::{error, info, warn};
+use ory_client::apis::configuration::Configuration;
+use reqwest::Client;
 use ory_client::apis::configuration::Configuration;
 use reqwest::Client;
 
@@ -29,6 +32,16 @@ async fn main() -> std::io::Result<()> {
         api_key: None,
         base_path: dotenvy::var("ORY_URL").unwrap(),
         client: Client::new(),
+        basic_auth: None,
+        user_agent: Some("Modrinth Minos".to_string()),
+        oauth_access_token: None,
+        bearer_access_token: None,
+    };
+
+    // Default Ory configuration
+    let configuration = Configuration {
+        api_key: None,
+        base_path: dotenvy::var("ORY_URL").unwrap(),
         basic_auth: None,
         user_agent: Some("Modrinth Minos".to_string()),
         oauth_access_token: None,
@@ -70,6 +83,7 @@ async fn main() -> std::io::Result<()> {
                         http::header::CONTENT_TYPE,
                     ])
                     .supports_credentials()
+                    .max_age(3600),
                     .max_age(3600),
             )
             .app_data(web::Data::new(configuration.clone()))

@@ -4,6 +4,12 @@ use crate::{
 };
 use actix_web::web;
 use actix_web_httpauth::middleware::HttpAuthentication;
+use crate::{
+    auth::{middleware::Authenticator, AuthError},
+    error,
+};
+use actix_web::web;
+use actix_web_httpauth::middleware::HttpAuthentication;
 use thiserror::Error;
 
 pub mod delete;
@@ -45,6 +51,8 @@ pub enum ApiError {
     Env(#[from] dotenvy::Error),
     #[error("Authentication error: {0}")]
     Unauthorized(#[from] AuthError),
+    #[error("Ory error: {0}")]
+    Ory(#[from] OryError),
     #[error("Ory error: {0}")]
     Ory(#[from] OryError),
     #[error("Error while deserializing: {0}")]
