@@ -1,5 +1,4 @@
-
-use crate::database::models::labrinth_user::LabrinthUser;
+use super::OryError;
 use crate::routes::ApiError;
 use actix_web::{post, web, HttpResponse};
 use futures::future::try_join_all;
@@ -7,9 +6,6 @@ use ory_client::apis::identity_api::create_identity;
 use ory_client::models::{self, CreateIdentityBody, Identity};
 use ory_client::{self, apis::configuration::Configuration};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
-
-use super::OryError;
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(untagged)]
 pub enum ImportUsers {
@@ -40,7 +36,6 @@ pub struct UserDataPassword {
 pub struct ImportedUserTraits<'a> {
     pub email: &'a str,
 }
-
 
 // POST /admin/import_account
 // Requires admin bearer token as header.
@@ -158,27 +153,48 @@ fn build_oidc(
     Ok(create_identity_body)
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct LabrinthUser {
+    pub id: i64,
+    pub github_id: Option<i64>,
+    pub username: String,
+    pub name: Option<String>,
+    pub email: Option<String>,
+}
 
 // POST pull_labrinth
 // Requires admin bearer token as header.
 #[post("pull_labrinth")]
 pub async fn pull_labrinth_github_accounts(
     configuration: web::Data<Configuration>,
-    pool: web::Data<PgPool>,
-
 ) -> Result<HttpResponse, ApiError> {
-    let _client = reqwest::Client::new();
-    
-    let users = LabrinthUser::get_all(        &**pool, ).await?;
-    let users : Vec<_> = users.into_iter().filter_map(|lu| {
-        Some(NewUserData::NewUserDataOidc(UserDataOidc {
-            email: lu.email?,
-            provider: "github".to_string(),
-            subject: lu.github_id?.to_string(),
-        }))
-    }).collect();
-    
-    let res = users.iter().map(|f| import_account_helper(f, &configuration));
+    let client = reqwest::Client::new();
+
+    let users: Vec<LabrinthUser> = client
+        .get(format!("{}minos/export", dotenvy::var("LABRINTH_API_URL")?))
+        .header("Accept", "application/json")
+        .header("Accept-Language", "en_US")
+        .send()
+        .await?
+        .json()
+        .await?;
+
+    // Convert to ory format and import
+    let users: Vec<NewUserData> = users
+        .into_iter()
+        .filter_map(|u| {
+            Some(NewUserData::NewUserDataOidc(UserDataOidc {
+                email: u.email?,
+                provider: "github".to_string(),
+                subject: u.github_id?.to_string(),
+            }))
+        })
+        .collect();
+
+    // TODO: make these import asynchronously
+    let res = users
+        .iter()
+        .map(|f| import_account_helper(f, &configuration));
     let res = try_join_all(res).await?;
     Ok(HttpResponse::Ok().json(res))
 }

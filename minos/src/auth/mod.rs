@@ -8,7 +8,7 @@ pub enum AuthError {
     #[error("Environment Error")]
     Env(#[from] dotenvy::Error),
     #[error("Error while deserializing: {0}")]
-    JSON(#[from] serde_json::Error),
+    Json(#[from] serde_json::Error),
     #[error("Could not make a session: {0}")]
     SessionError(#[from] ory_client::apis::Error<ory_client::apis::frontend_api::ToSessionError>),
     #[error("Could not parse cookie: {0}")]

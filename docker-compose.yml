@@ -12,7 +12,7 @@ services:
       - type: bind
         source: ./minos-configs
         target: /etc/config/kratos
-    command: -c /etc/config/kratos/kratos.yml migrate sql -e --yes
+    entrypoint: /bin/sh -c "/usr/bin/kratos -c /etc/config/kratos/kratos.yml migrate sql -e --yes >/dev/null 2>&1"
     restart: on-failure
   kratos:
     depends_on:
@@ -76,5 +76,8 @@ services:
     build: minos
     ports: 
       - "4000:4000"
+    env_file:
+      - minos/.env
+
 volumes:
   kratos-sqlite:

@@ -7,9 +7,9 @@ use actix_web_httpauth::middleware::HttpAuthentication;
 use thiserror::Error;
 
 pub mod delete;
-pub mod user;
 pub mod import;
 pub mod not_found;
+pub mod user;
 
 pub use not_found::not_found;
 
@@ -29,7 +29,9 @@ pub fn user_config(cfg: &mut web::ServiceConfig) {
 pub fn admin_config(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("admin")
+            .service(user::list_identities)
             .service(import::import_account)
+            .service(import::pull_labrinth_github_accounts)
             .service(delete::delete_all)
             .wrap(HttpAuthentication::bearer(
                 crate::auth::middleware::admin_validator,
@@ -46,24 +48,21 @@ pub enum ApiError {
     #[error("Ory error: {0}")]
     Ory(#[from] OryError),
     #[error("Error while deserializing: {0}")]
-    JSON(#[from] serde_json::Error),
+    Json(#[from] serde_json::Error),
     #[error("Failed to insert authentication session into request")]
     SessionError,
     #[error("Reqwest error: {0}")]
     Reqwest(#[from] reqwest::Error),
-    #[error("Sqlx error: {0}")]
-    Sqlx(#[from] sqlx::Error),
 }
 
 impl actix_web::ResponseError for ApiError {
     fn status_code(&self) -> actix_web::http::StatusCode {
         match self {
             ApiError::Env(..) => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
-            ApiError::JSON(..) => actix_web::http::StatusCode::BAD_REQUEST,
+            ApiError::Json(..) => actix_web::http::StatusCode::BAD_REQUEST,
             ApiError::Ory(..) => actix_web::http::StatusCode::BAD_REQUEST,
             ApiError::SessionError => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::Reqwest(..) => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
-            ApiError::Sqlx(..) => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
 
             ApiError::Unauthorized(..) => actix_web::http::StatusCode::BAD_REQUEST,
         }
@@ -72,12 +71,10 @@ impl actix_web::ResponseError for ApiError {
         actix_web::HttpResponse::build(self.status_code()).json(crate::error::ApiError {
             error: match self {
                 ApiError::Env(..) => "environment_error",
-                ApiError::JSON(..) => "invalid_input",
+                ApiError::Json(..) => "invalid_input",
                 ApiError::Ory(..) => "invalid_input",
                 ApiError::SessionError => "internal_error",
                 ApiError::Reqwest(..) => "internal_error",
-                ApiError::Sqlx(..) => "internal_error",
-
                 ApiError::Unauthorized(..) => "unauthorized",
             },
             description: &self.to_string(),
@@ -99,6 +96,7 @@ pub enum OryError {
     DeleteIdentityError(
         #[from] ory_client::apis::Error<ory_client::apis::identity_api::DeleteIdentityError>,
     ),
+
     #[error("Error while deserializing: {0}")]
-    JSON(#[from] serde_json::Error),
+    Json(#[from] serde_json::Error),
 }

@@ -24,9 +24,8 @@ chrono = { version  = "0.4.19", features = ["serde"] }
 uuid = { version = "1.2.2", features = ["v4", "fast-rng", "serde"] }
 url = "2.2.2"
 
-sqlx = { version = "0.6.2", features = ["runtime-actix-rustls", "postgres", "chrono", "offline", "macros", "migrate", "decimal", "json"] }
-
 thiserror = "1.0"
+lazy_static = "1.4.0"
 
 dotenvy = "0.15.6"
 log = "0.4.16"
