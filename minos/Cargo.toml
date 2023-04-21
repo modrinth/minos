@@ -5,10 +5,16 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+# This seems redundant, but it's necessary for Docker to work
+[[bin]]
+name = "minos"
+path = "src/main.rs"
+
 [dependencies]
 actix-rt = "2.7.0"
 actix-web = "4.1.0"
 actix-cors = "0.6.1"
+actix-web-httpauth = "0.8.0"
 
 http = "0.2.9"
 
@@ -18,13 +24,11 @@ chrono = { version  = "0.4.19", features = ["serde"] }
 uuid = { version = "1.2.2", features = ["v4", "fast-rng", "serde"] }
 url = "2.2.2"
 
-sqlx = { version = "0.6.2", features= ["runtime-actix-rustls", "postgres", "chrono", "offline", "macros", "migrate", "decimal", "json"]}
-
 thiserror = "1.0"
 
 dotenvy = "0.15.6"
 log = "0.4.16"
-env_logger = "0.10.0"
+env_logger = "0.10.0"   
 
 futures = "0.3.21"
 tokio = "1.19.2"

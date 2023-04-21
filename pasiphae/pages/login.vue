@@ -1,5 +1,6 @@
 <template>
-  <div id="login">
+  <div v-if="flowData" id="login" >
+    Login to your account.
     <form @submit.prevent="loginPassword">
       <input v-model="email" placeholder="email" />
       <input v-model="password" placeholder="password" type="password" />
@@ -10,21 +11,20 @@
       {{ oryUiMsg.text }}
     </li>
 
-    <form @submit.prevent="loginGithub">
-      <input type="submit" value="log in with github" />
-    </form>
-
     <form @submit.prevent="loginDiscord">
       <input type="submit" value="log in with discord" />
     </form>
-
-    <form @submit.prevent="loginMicrosoft">
-      <input type="submit" value="log in with microsoft" />
+  
+   <form @submit.prevent="loginGithub">
+      <input type="submit" value="log in with github" />
     </form>
-
     <form @submit.prevent="loginGoogle">
       <input type="submit" value="log in with google" />
+    </form> 
+    <form @submit.prevent="loginMicrosoft">
+      <input type="submit" value="log in with microsoft (requires https redirect uri)" />
     </form>
+ 
 
     <p>
       Note: authorizing via google will only work for a couple accounts that I've preauthorized. (I
@@ -55,14 +55,30 @@ const config = useRuntimeConfig()
 const route = useRoute()
 const { $oryConfig } = useNuxtApp()
 
-const oryUiMsgs = ref([{ text: 'Please login!' }])
+const oryUiMsgs = ref([])
 const email = ref('')
 const password = ref('')
+
+// Attempt to get flow information on page load
+const flowData = ref(null);
+$oryConfig.getLoginFlow({ id: route.query.flow || "" })
+.then( r =>  {
+  flowData.value = r.data;
+  oryUiMsgs.value = extractNestedErrorMessagesFromData(r.data)})
+// Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
+// Any other error we just leave the page
+.catch( e => {
+  if (e.response.status === 404)  {
+    window.location.href = config.oryUrl + '/self-service/login/browser'
+  } else {
+    window.location.href = config.nuxtUrl;
+  }
+});
 
 async function loginPassword() {
   // loginFlowBody is an instance of UpdateLoginFlowWithPasswordMethod
   const loginFlowBody = {
-    csrf_token: '', // set in generic function
+    csrf_token: extractNestedCsrfToken(flowData.value), // set in generic function
     identifier: email.value,
     method: 'password',
     password: password.value,
@@ -73,7 +89,7 @@ async function loginPassword() {
 async function loginGithub() {
   // loginFlowBody is an instance of UpdateLoginFlowWithOidcMethod
   const loginFlowBody = {
-    csrf_token: '', // set in generic function
+    csrf_token: extractNestedCsrfToken(flowData.value), // set in generic function
     method: 'oidc',
     provider: 'github',
   }
@@ -83,7 +99,7 @@ async function loginGithub() {
 async function loginDiscord() {
   // loginFlowBody is an instance of UpdateLoginFlowWithOidcMethod
   const loginFlowBody = {
-    csrf_token: '', // set in generic function
+    csrf_token: extractNestedCsrfToken(flowData.value), // set in generic function
     method: 'oidc',
     provider: 'discord',
   }
@@ -93,7 +109,7 @@ async function loginDiscord() {
 async function loginGoogle() {
   // loginFlowBody is an instance of UpdateLoginFlowWithOidcMethod
   const loginFlowBody = {
-    csrf_token: '', // set in generic function
+    csrf_token: extractNestedCsrfToken(flowData.value), // set in generic function
     method: 'oidc',
     provider: 'google',
   }
@@ -103,7 +119,7 @@ async function loginGoogle() {
 async function loginMicrosoft() {
   // loginFlowBody is an instance of UpdateLoginFlowWithOidcMethod
   const loginFlowBody = {
-    csrf_token: '', // set in generic function
+    csrf_token: extractNestedCsrfToken(flowData.value), // set in generic function
     method: 'oidc',
     provider: 'microsoft',
   }
@@ -112,12 +128,6 @@ async function loginMicrosoft() {
 
 // loginFlowBody must match a variant of UpdateLoginFlowWith<method>Method (included are UpdateLoginFlowWithOidcMethod | UpdateLoginFlowWithPasswordMethod)
 async function loginGeneric(loginFlowBody) {
-  // Get registration flow object from flow id parameter
-  const flowData = await $oryConfig.getLoginFlow({ id: route.query.flow })
-
-  // Directly extract csrf_token from nested returned Ory UI elements
-  loginFlowBody.csrf_token = extractNestedCsrfToken(flowData.data)
-
   // Update login flow using passed method of choice
   await $oryConfig
     .updateLoginFlow({
@@ -127,7 +137,7 @@ async function loginGeneric(loginFlowBody) {
     .then(( _r ) => {
     
       // If return_to exists, return to it, otherwise return to main page
-      const returnUrl = flowData.data.return_to || config.nuxtUrl
+      const returnUrl = flowData.value.return_to || config.nuxtUrl
       window.location.href = returnUrl
     })
     .catch((e) => {

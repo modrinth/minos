@@ -1,0 +1,57 @@
+version: '3.7'
+services:
+  kratos-migrate:
+    image: oryd/kratos:v0.11.1
+    environment:
+      - DSN=sqlite:///var/lib/sqlite/db.sqlite?_fk=true&mode=rwc
+    volumes:
+      - type: volume
+        source: kratos-sqlite
+        target: /var/lib/sqlite
+        read_only: false
+      - type: bind
+        source: ./minos-configs
+        target: /etc/config/kratos
+    command: -c /etc/config/kratos/kratos.yml migrate sql -e --yes
+    restart: on-failure
+  kratos:
+    depends_on:
+      - kratos-migrate
+    image: oryd/kratos:v0.11.1
+    env_file:
+      - .env
+    environment:
+    - SELFSERVICE_METHODS_OIDC_CONFIG_PROVIDERS_0_CLIENT_ID
+    - SELFSERVICE_METHODS_OIDC_CONFIG_PROVIDERS_0_CLIENT_SECRET
+    - SELFSERVICE_METHODS_OIDC_CONFIG_PROVIDERS_1_CLIENT_ID
+    - SELFSERVICE_METHODS_OIDC_CONFIG_PROVIDERS_1_CLIENT_SECRET
+    - SELFSERVICE_METHODS_OIDC_CONFIG_PROVIDERS_2_CLIENT_ID
+    - SELFSERVICE_METHODS_OIDC_CONFIG_PROVIDERS_2_CLIENT_SECRET
+    - SELFSERVICE_METHODS_OIDC_CONFIG_PROVIDERS_3_CLIENT_ID
+    - SELFSERVICE_METHODS_OIDC_CONFIG_PROVIDERS_3_CLIENT_SECRET
+    - SELFSERVICE_METHODS_OIDC_CONFIG_PROVIDERS_4_CLIENT_ID
+    - SELFSERVICE_METHODS_OIDC_CONFIG_PROVIDERS_4_CLIENT_SECRET
+    - SELFSERVICE_METHODS_OIDC_CONFIG_PROVIDERS_5_CLIENT_ID
+    - SELFSERVICE_METHODS_OIDC_CONFIG_PROVIDERS_5_CLIENT_SECRET
+    - DSN=sqlite:///var/lib/sqlite/db.sqlite?_fk=true
+    - LOG_LEVEL=trace
+    ports:
+      - '4433:4433' # public
+      # - '4434:4434' # admin can be uncommented for testing- but should be removed in prod.
+    restart: unless-stopped
+    command: serve -c /etc/config/kratos/kratos.yml --dev --watch-courier
+    volumes:
+      - type: volume
+        source: kratos-sqlite
+        target: /var/lib/sqlite
+        read_only: false
+      - type: bind
+        source: ./minos-configs
+        target: /etc/config/kratos
+  mailslurper:
+    image: oryd/mailslurper:latest-smtps
+    ports:
+      - '4436:4436'
+      - '4437:4437'
+volumes:
+  kratos-sqlite:

@@ -36,7 +36,7 @@
     <div v-if="apiResponse" class="long">
       <p>
         You can make authenticated calls to Minos API by sending the cookie to the test endpoint
-        when the server is running <code>/demo</code>. <br />
+        when the server is running <code>/user/session</code>. <br />
         If you are seeing this you have successfully connected to Minos, and attempted authorization
         with the result shown below. <br />This will return 401 if it fails, if it succeeds it will
         return 200 with the following session object attached.
@@ -83,7 +83,7 @@ $oryConfig.toSession().then(({ data }) => {
 // /demo is a test endpoint that returns 200 if successful authentication, 401 if failure to authenticate.
 // (This does the same authentication check as the ory.toSession() above, but remotely in the Minos endpoint on the Rust side)
 // response body is that session object
-fetch(config.minosUrl + '/demo', {
+fetch(config.minosUrl + '/user/session', {
   // "/"
   // Do not forget to set this - it is required to send the session cookie!
   credentials: 'include',

@@ -3,6 +3,8 @@ use std::rc::Rc;
 use crate::routes::ApiError;
 use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform};
 use actix_web::{Error, HttpMessage};
+use actix_web_httpauth::extractors::bearer::BearerAuth;
+use actix_web_httpauth::extractors::{bearer, AuthenticationError};
 use futures::future::{ready, LocalBoxFuture, Ready};
 use futures::FutureExt;
 use http::header::COOKIE;
@@ -98,4 +100,21 @@ async fn get_authenticated_session(
     // Get session from auth cookie. If this returns a session, there is indeed a session and the user is logged in.
     let session = to_session(configuration, None, cookies_unparsed).await?;
     Ok(session)
+}
+
+// Admin API requests need Bearer matching ORY_AUTH_BEARER
+pub async fn admin_validator(
+    req: ServiceRequest,
+    credentials: BearerAuth,
+) -> Result<ServiceRequest, (Error, ServiceRequest)> {
+    let config = req
+        .app_data::<bearer::Config>()
+        .cloned()
+        .unwrap_or_default();
+
+    if credentials.token() == dotenvy::var("ORY_AUTH_BEARER").unwrap() {
+        Ok(req)
+    } else {
+        Err((AuthenticationError::from(config).into(), req))
+    }
 }
