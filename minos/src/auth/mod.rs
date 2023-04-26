@@ -15,10 +15,10 @@ pub enum AuthError {
     CookieParseError(#[from] actix_web::cookie::ParseError),
     #[error("Actix error: {0}")]
     ActixError(#[from] actix_web::Error),
-    #[error("No cookie found attached to request.")]
-    NoCookieError,
     #[error("Could not convert header to string: {0}")]
     HeaderToStrError(#[from] ToStrError),
     #[error("Reqwest error: {0}")]
     Reqwest(#[from] reqwest::Error),
+    #[error("No cookie or Bearer header found attached to request.")]
+    NoMethodFound,
 }
