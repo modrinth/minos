@@ -5,8 +5,6 @@ use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Tr
 use actix_web::{Error, HttpMessage};
 use actix_web_httpauth::extractors::bearer::BearerAuth;
 use actix_web_httpauth::extractors::{bearer, AuthenticationError};
-use actix_web_httpauth::extractors::bearer::BearerAuth;
-use actix_web_httpauth::extractors::{bearer, AuthenticationError};
 use futures::future::{ready, LocalBoxFuture, Ready};
 use futures::FutureExt;
 use http::header::COOKIE;
@@ -97,7 +95,7 @@ async fn get_authenticated_session(
 ) -> Result<Session, AuthError> {
     // Do not parse cookies, simply pass them through directly to GET call inside to_session
     let cookies_unparsed = req.headers().get(COOKIE).ok_or(AuthError::NoCookieError)?;
-    let cookies_unparsed = Some(cookies_unparsed.to_str()?);
+    let cookies_unparsed: Option<&str> = Some(cookies_unparsed.to_str()?);
 
     // Get session from auth cookie. If this returns a session, there is indeed a session and the user is logged in.
     let session = to_session(configuration, None, cookies_unparsed).await?;

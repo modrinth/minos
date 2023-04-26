@@ -4,20 +4,21 @@ use crate::{
 };
 use actix_web::web;
 use actix_web_httpauth::middleware::HttpAuthentication;
-use crate::{
-    auth::{middleware::Authenticator, AuthError},
-    error,
-};
-use actix_web::web;
-use actix_web_httpauth::middleware::HttpAuthentication;
 use thiserror::Error;
 
 pub mod delete;
 pub mod import;
+pub mod login;
 pub mod not_found;
 pub mod user;
 
 pub use not_found::not_found;
+
+// Login
+// Unprotected route
+pub fn login_config(cfg: &mut web::ServiceConfig) {
+    cfg.service(web::scope("login").service(login::api_login));
+}
 
 // User routes
 // Protected by auth middleware
@@ -51,8 +52,6 @@ pub enum ApiError {
     Env(#[from] dotenvy::Error),
     #[error("Authentication error: {0}")]
     Unauthorized(#[from] AuthError),
-    #[error("Ory error: {0}")]
-    Ory(#[from] OryError),
     #[error("Ory error: {0}")]
     Ory(#[from] OryError),
     #[error("Error while deserializing: {0}")]
@@ -103,6 +102,14 @@ pub enum OryError {
     #[error("Delete Identity error: {0}")]
     DeleteIdentityError(
         #[from] ory_client::apis::Error<ory_client::apis::identity_api::DeleteIdentityError>,
+    ),
+    #[error("Create login flow error: {0}")]
+    CreateLoginFlowError(
+        #[from] ory_client::apis::Error<ory_client::apis::frontend_api::CreateNativeLoginFlowError>,
+    ),
+    #[error("Update login flow error: {0}")]
+    UpdateLoginFlowError(
+        #[from] ory_client::apis::Error<ory_client::apis::frontend_api::UpdateLoginFlowError>,
     ),
 
     #[error("Error while deserializing: {0}")]
