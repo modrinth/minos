@@ -66,7 +66,6 @@ async fn main() -> std::io::Result<()> {
                     .max_age(3600),
             )
             .app_data(web::Data::new(configuration.clone()))
-            .configure(routes::keygen_config)
             .configure(routes::user_config)
             .configure(routes::admin_config)
             .wrap(sentry_actix::Sentry::new())

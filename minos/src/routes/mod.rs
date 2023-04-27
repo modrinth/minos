@@ -8,17 +8,10 @@ use thiserror::Error;
 
 pub mod delete;
 pub mod import;
-pub mod key_generation;
 pub mod not_found;
 pub mod user;
 
 pub use not_found::not_found;
-
-// Login
-// Unprotected route
-pub fn keygen_config(cfg: &mut web::ServiceConfig) {
-    cfg.service(key_generation::api_keygen);
-}
 
 // User routes
 // Protected by auth middleware- requires a valid session cookie or Bearer token (representing a session)
@@ -52,8 +45,6 @@ pub enum ApiError {
     Env(#[from] dotenvy::Error),
     #[error("Authentication error: {0}")]
     Unauthorized(#[from] AuthError),
-    #[error("Invalid credentials")]
-    InvalidCredentials,
     #[error("Ory error: {0}")]
     Ory(#[from] OryError),
     #[error("Error while deserializing: {0}")]
@@ -70,7 +61,6 @@ impl actix_web::ResponseError for ApiError {
             ApiError::Env(..) => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::Json(..) => actix_web::http::StatusCode::BAD_REQUEST,
             ApiError::Ory(..) => actix_web::http::StatusCode::BAD_REQUEST,
-            ApiError::InvalidCredentials => actix_web::http::StatusCode::UNAUTHORIZED,
             ApiError::SessionError => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::Reqwest(..) => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
 
@@ -86,7 +76,6 @@ impl actix_web::ResponseError for ApiError {
                 ApiError::SessionError => "internal_error",
                 ApiError::Reqwest(..) => "internal_error",
                 ApiError::Unauthorized(..) => "unauthorized",
-                ApiError::InvalidCredentials => "unauthorized",
             },
             description: &self.to_string(),
         })

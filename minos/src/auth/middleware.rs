@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use crate::routes::ApiError;
 use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform};
-use actix_web::{Error, FromRequest, HttpMessage};
+use actix_web::{Error, HttpMessage};
 use actix_web_httpauth::extractors::bearer::BearerAuth;
 use actix_web_httpauth::extractors::{bearer, AuthenticationError};
 use futures::future::{ready, LocalBoxFuture, Ready};
@@ -100,23 +100,11 @@ async fn get_authenticated_session(
     // Cookie
     // Do not parse cookies, simply pass them through directly to GET call inside to_session
     let cookies_unparsed = req.headers().get(COOKIE).and_then(|c| c.to_str().ok());
-
-    // Authorization header
-    // Get the Authorization header, and try to parse it as a Bearer token
-    let mut empty_payload = actix_web::dev::Payload::None;
-    let auth_result = BearerAuth::from_request(req.request(), &mut empty_payload)
-        .await
-        .ok();
-    let token = auth_result.as_ref().map(|t| t.token());
-
-    if let (None, None) = (&cookies_unparsed, &token) {
-        // If no cookie or token is present, return an error
-        Err(AuthError::NoMethodFound)
-    } else {
-        // If a cookie or token is present, try to create a session from it
-        let session = to_session(configuration, token, cookies_unparsed).await?;
-        Ok(session)
+    if cookies_unparsed.is_none() {
+        return Err(AuthError::NoMethodFound);
     }
+    let session = to_session(configuration, None, cookies_unparsed).await?;
+    Ok(session)
 }
 
 // Admin API requests need Bearer matching ORY_AUTH_BEARER
