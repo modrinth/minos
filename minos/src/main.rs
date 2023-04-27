@@ -3,7 +3,7 @@ mod error;
 mod routes;
 mod util;
 
-use crate::util::env::{parse_strings_from_var, parse_var};
+use crate::util::env::parse_var;
 use actix_cors::Cors;
 use actix_web::{http, web, App, HttpServer};
 use log::{error, info, warn};
@@ -92,11 +92,6 @@ fn check_env_vars() -> bool {
             );
         }
         check
-    }
-
-    if parse_strings_from_var("CORS_ALLOWED_ORIGINS").is_none() {
-        warn!("Variable `CORS_ALLOWED_ORIGINS` missing in dotenv or not a json array of strings");
-        failed |= true;
     }
 
     failed |= check_var::<String>("BIND_ADDR");
