@@ -3,7 +3,7 @@ mod error;
 mod routes;
 mod util;
 
-use crate::util::env::{parse_strings_from_var, parse_var};
+use crate::util::env::parse_var;
 use actix_cors::Cors;
 use actix_web::{http, web, App, HttpServer};
 use log::{error, info, warn};
@@ -54,14 +54,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(
                 Cors::default()
-                    .allowed_origin_fn(|origin, _req_head| {
-                        let allowed_origins =
-                            parse_strings_from_var("CORS_ALLOWED_ORIGINS").unwrap_or_default();
-
-                        allowed_origins.contains(&"*".to_string())
-                            || allowed_origins
-                                .contains(&origin.to_str().unwrap_or_default().to_string())
-                    })
+                    .allow_any_origin()
                     .allowed_methods(vec!["GET", "POST"])
                     .allowed_headers(vec![
                         http::header::AUTHORIZATION,
@@ -75,7 +68,6 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(configuration.clone()))
             .configure(routes::user_config)
             .configure(routes::admin_config)
-            .app_data(routes::admin_config)
             .wrap(sentry_actix::Sentry::new())
             .default_service(web::get().to(routes::not_found))
     })
@@ -101,14 +93,11 @@ fn check_env_vars() -> bool {
         check
     }
 
-    if parse_strings_from_var("CORS_ALLOWED_ORIGINS").is_none() {
-        warn!("Variable `CORS_ALLOWED_ORIGINS` missing in dotenv or not a json array of strings");
-        failed |= true;
-    }
-
     failed |= check_var::<String>("BIND_ADDR");
     failed |= check_var::<String>("ORY_URL");
     failed |= check_var::<String>("ORY_AUTH_BEARER");
+
+    failed |= check_var::<String>("LABRINTH_API_URL");
 
     failed
 }

@@ -8,7 +8,7 @@ Currently it only has the demo endpoint `GET /demo` which returns 200 if and onl
 
 - Cookie with Ory session identifier (from the same domain, such as the Nuxt example running) is attached as a header.
 
-If it passes, it returns the Ory sessoin as a JSON. Otherwise, it returns 401.
+If it passes, it returns the Ory sessoin as a Json. Otherwise, it returns 401.
 
 # TL;DR setup:
 

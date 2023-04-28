@@ -88,16 +88,21 @@ where
     }
 }
 
-// Authenticate a ServiceRequest by trying to create an Ory session from the Cookie
+// Authenticate a ServiceRequest by trying to create an Ory session from the Cookie, or the Session token
+// We make two separate checks:
+// 1. If a cookie is present, we try to create a session from it
+// 2. If a session token is passed in the Authorization header (as a Bearer token), we try to create a session from it
+// That way Minos endpoints can be called from a browser, or from a API
 async fn get_authenticated_session(
     configuration: &Configuration,
     req: &ServiceRequest,
 ) -> Result<Session, AuthError> {
+    // Cookie
     // Do not parse cookies, simply pass them through directly to GET call inside to_session
-    let cookies_unparsed = req.headers().get(COOKIE).ok_or(AuthError::NoCookieError)?;
-    let cookies_unparsed = Some(cookies_unparsed.to_str()?);
-
-    // Get session from auth cookie. If this returns a session, there is indeed a session and the user is logged in.
+    let cookies_unparsed = req.headers().get(COOKIE).and_then(|c| c.to_str().ok());
+    if cookies_unparsed.is_none() {
+        return Err(AuthError::NoMethodFound);
+    }
     let session = to_session(configuration, None, cookies_unparsed).await?;
     Ok(session)
 }
