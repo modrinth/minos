@@ -29,7 +29,6 @@ pub fn user_config(cfg: &mut web::ServiceConfig) {
 pub fn admin_config(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("admin")
-            .service(user::list_identities)
             .service(import::import_account)
             .service(import::pull_labrinth_github_accounts)
             .service(delete::delete_all)
