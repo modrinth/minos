@@ -1,30 +1,57 @@
 <template>
-  <div v-if="flowData" id="recovery">
-    Recover your account.
-    <form @submit.prevent="recovery">
-      <input v-model="email" placeholder="email" />
-      <input type="submit" value="send email recovery link" />
-    </form>
-    <form @submit.prevent="submitCode">
-      <input v-model="code" placeholder="code" />
-      <input type="submit" value="recover using code" />
-    </form>
-
-    <li v-for="oryUiMsg in oryUiMsgs" :key="oryUiMsg">
-      {{ oryUiMsg.text }}
-    </li>
-
-    <NuxtLink to="/">Home page</NuxtLink>
-
-    
-  </div>
+  <template v-if="flowData">
+    <h1>Reset your password</h1>
+    <div v-if="oryUiMsgs.length > 0" class="errors">
+      <p v-for="oryUiMsg in oryUiMsgs" :key="oryUiMsg">
+        {{ oryUiMsg.text }}
+      </p>
+    </div>
+    <template v-if="mode === 0">
+      <p>Enter your email below and we'll send a recovery link to allow you to recover your account.</p>
+      <label for="email" hidden>Email</label>
+      <input
+        v-model="email"
+        id="email"
+        type="text"
+        placeholder="Email"
+      />
+      <button @click="recovery" class="btn btn-primary continue-btn">Send recovery email</button>
+    </template>
+    <template v-else-if="mode === 1">
+      <p>A recovery email has been sent to <strong>{{ email }}</strong>.</p>
+      <p>Check your email and enter the code from it below.</p>
+      <input
+        id="code"
+        v-model="code"
+        type="text"
+        placeholder="Enter code"
+      />
+      <button @click="submitCode" class="btn btn-primary continue-btn">Recover</button>
+    </template>
+    <template v-else-if="mode === 2">
+      <p>You are resetting the password for the Modrinth account associated with <strong>{{ email }}</strong>.</p>
+      <label for="password" hidden>Password</label>
+      <input
+        id="password"
+        type="text"
+        placeholder="Password"
+      />
+      <label for="confirm-password" hidden>Password</label>
+      <input
+        id="confirm-password"
+        type="text"
+        placeholder="Confirm password"
+      />
+      <button class="btn btn-primary continue-btn">Reset password</button>
+    </template>
+  </template>
 </template>
 
 <script setup>
-import { 
-  extractNestedCsrfToken, 
-  extractNestedErrorMessagesFromError, 
-  extractNestedErrorMessagesFromData 
+import {
+  extractNestedCsrfToken,
+  extractNestedErrorMessagesFromError,
+  extractNestedErrorMessagesFromData,
 } from '~/helpers/ory-ui-extract'
 const { $oryConfig } = useNuxtApp()
 const route = useRoute()
@@ -32,23 +59,26 @@ const route = useRoute()
 const oryUiMsgs = ref([])
 const email = ref('')
 const code = ref('')
+const mode = ref(0)
 
 // Attempt to get flow information on page load
-const flowData = ref(null);
-$oryConfig.getRecoveryFlow({ id: route.query.flow})
-.then( r =>  {
-  flowData.value = r.data;
-  oryUiMsgs.value = extractNestedErrorMessagesFromData(r.data)})
-// Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
-// Any other error we just leave the page
-.catch( e => {
-  if (e.response.status === 404)  {
-    window.location.href = config.oryUrl + '/self-service/recovery/browser'
-  } else {
-    window.location.href = config.nuxtUrl;
-  }
-});
-
+const flowData = ref(null)
+$oryConfig
+  .getRecoveryFlow({ id: route.query.flow })
+  .then((r) => {
+    console.log(r.data)
+    flowData.value = r.data
+    oryUiMsgs.value = extractNestedErrorMessagesFromData(r.data)
+  })
+  // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
+  // Any other error we just leave the page
+  .catch((e) => {
+    if (e.response.status === 404) {
+      navigateTo(config.oryUrl + '/self-service/recovery/browser', { external: true })
+    } else {
+      navigateTo('/')
+    }
+  })
 
 // Send recovery email to the set 'email'
 async function recovery() {
@@ -63,9 +93,11 @@ async function recovery() {
       },
     })
     .then((_r) => {
-      oryUiMsgs.value = [{ text: 'Sent recovery email.' }]
+      oryUiMsgs.value = []
+      mode.value = 1
     })
     .catch((e) => {
+      console.log(e)
       // Get displayable error messsages from nested returned Ory UI elements
       oryUiMsgs.value = extractNestedErrorMessagesFromError(e)
     })
@@ -85,6 +117,7 @@ async function submitCode() {
       },
     })
     .then((_r) => {
+      oryUiMsgs.value = []
       // If return_to exists, return to it, otherwise return to main page
       const returnUrl = flowData.value.return_to || nuxtUrl
       window.location.href = returnUrl

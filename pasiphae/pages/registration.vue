@@ -1,83 +1,104 @@
 <template>
-  <div v-if="flowData" id="registration" >
-    Register for a new account.
-
-    <form @submit.prevent="registerPassword">
-      <input v-model="email" placeholder="email" />
-      <input v-model="password" placeholder="password" type="password" />
-      <input type="submit" value="sign up" />
-    </form>
-
-    <li v-for="oryUiMsg in oryUiMsgs" :key="oryUiMsg">
-      {{ oryUiMsg.text }}
-    </li>
-
-    <form @submit.prevent="registerDiscord">
-      <input type="submit" value="register with discord" />
-    </form>
-   <form @submit.prevent="registerGithub">
-      <input type="submit" value="register with github" />
-    </form>
-    <form @submit.prevent="registerGoogle">
-      <input type="submit" value="register with google" />
-    </form> 
-    <form @submit.prevent="registerMicrosoft">
-      <input type="submit" value="register with microsoft (requires https redirect uri)" />
-    </form>
- 
-
-    <p>
-      Note: authorizing via google will only work for a couple accounts that I've preauthorized. (I
-      can add more, just message me.)
-    </p>
-    <li>wyatt@modrinth.com</li>
-    <li>jai@modrinth.com</li>
-    <li>wverchere@gmail.com</li>
-
-    <p>
-      This is because Google does not allow signin with any account until the oauth app is reviewed
-      and published.
-    </p>
-
-    <NuxtLink to="/">Home page</NuxtLink>
-
+  <h1>Create your account</h1>
+  <div class="third-party">
+    <Button class="discord-btn" @click="registerDiscord"><DiscordIcon /> <span>Discord</span></Button>
+    <Button class="github-btn" @click="registerGithub"><GitHubIcon /> <span>GitHub</span></Button>
+    <Button class="microsoft-btn" @click="registerMicrosoft"><MicrosoftIcon /> <span>Microsoft</span></Button>
+    <Button class="google-btn" @click="registerGoogle"><GoogleIcon /> <span>Google</span></Button>
+    <Button class="apple-btn" @click=""><AppleIcon /> <span>Apple</span></Button>
+    <Button class="gitlab-btn" @click=""><GitLabIcon /> <span>GitLab</span></Button>
   </div>
+  <div class="text-divider">
+    <div></div>
+    <span>or</span>
+    <div></div>
+  </div>
+  <div v-if="oryUiMsgs.length > 0" class="errors">
+    <p v-for="oryUiMsg in oryUiMsgs" :key="oryUiMsg">
+      {{ oryUiMsg.text }}
+    </p>
+  </div>
+  <label for="email" hidden>Email</label>
+  <input
+    v-model="email"
+    id="email"
+    type="text"
+    placeholder="Email"
+  />
+  <label for="username" hidden>Username</label>
+  <input
+    v-model="username"
+    id="username"
+    type="text"
+    placeholder="Username"
+  />
+  <label for="password" hidden>Password</label>
+  <input
+    v-model="password"
+    id="password"
+    type="password"
+    placeholder="Password"
+  />
+  <label for="confirm-password" hidden>Password</label>
+  <input
+    v-model="confirmPassword"
+    id="confirm-password"
+    type="password"
+    placeholder="Confirm password"
+  />
+  <button @click="registerPassword" class="btn btn-primary continue-btn">Create account <RightArrowIcon /></button>
+  <p>Already have an account yet? <a class="text-link" :href="loginFlowEndpoint">Sign in.</a></p>
 </template>
 
 <script setup>
+import DiscordIcon from '@/assets/discord.svg'
+import GoogleIcon from '@/assets/google.svg'
+import AppleIcon from '@/assets/apple.svg'
+import MicrosoftIcon from '@/assets/microsoft.svg'
+import GitLabIcon from '@/assets/gitlab.svg'
+import { Button, RightArrowIcon, GitHubIcon } from 'omorphia'
 import {
   extractNestedCsrfToken,
   extractNestedErrorMessagesFromError,
-  extractNestedErrorMessagesFromData
+  extractNestedErrorMessagesFromData,
 } from '~/helpers/ory-ui-extract'
 
 const config = useRuntimeConfig()
 const route = useRoute()
 const { $oryConfig } = useNuxtApp()
 
+const loginFlowEndpoint = ref(config.oryUrl + '/self-service/login/browser')
+
 const oryUiMsgs = ref([])
 const email = ref('')
+const username = ref('')
 const password = ref('')
+const confirmPassword = ref('')
 
 // Attempt to get flow information on page load
-const flowData = ref(null);
-$oryConfig.getRegistrationFlow({ id: route.query.flow || "" })
-.then( r =>  {
-  flowData.value = r.data;
-  oryUiMsgs.value = extractNestedErrorMessagesFromData(r.data)
-})
-// Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
-// Any other error we just leave the page
-.catch( e => {
-  if (e.response.status === 404)  {
-    window.location.href = config.oryUrl + '/self-service/registration/browser'
-  } else {
-    window.location.href = config.nuxtUrl;
-  }
-});
-
+const flowData = ref(null)
+$oryConfig
+  .getRegistrationFlow({ id: route.query.flow || '' })
+  .then((r) => {
+    flowData.value = r.data
+    oryUiMsgs.value = extractNestedErrorMessagesFromData(r.data)
+  })
+  // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
+  // Any other error we just leave the page
+  .catch((e) => {
+    if (e.response.status === 404) {
+      navigateTo(config.oryUrl + '/self-service/registration/browser', { external: true })
+    } else {
+      navigateTo('/')
+    }
+  })
 
 async function registerPassword() {
+  if (password.value !== confirmPassword.value) {
+    oryUiMsgs.value = [{ text: 'Passwords do not match!' }]
+    return;
+  }
+
   // There are several preset ways to identify people
   // https://www.ory.sh/docs/kratos/manage-identities/identity-schema
   // -email and password (seems ideal, and the one I have currently setup)
@@ -91,7 +112,7 @@ async function registerPassword() {
     password: password.value,
     'traits.email': email.value,
   }
-  await registerGeneric(registrationFlowBody);
+  await registerGeneric(registrationFlowBody)
 }
 async function registerGithub() {
   const registrationFlowBody = {
@@ -100,7 +121,7 @@ async function registerGithub() {
     method: 'oidc',
     provider: 'github',
   }
-  await registerGeneric(registrationFlowBody);
+  await registerGeneric(registrationFlowBody)
 }
 
 async function registerDiscord() {
@@ -110,7 +131,7 @@ async function registerDiscord() {
     method: 'oidc',
     provider: 'discord',
   }
-  await registerGeneric(registrationFlowBody);
+  await registerGeneric(registrationFlowBody)
 }
 
 async function registerGoogle() {
@@ -120,7 +141,7 @@ async function registerGoogle() {
     method: 'oidc',
     provider: 'google',
   }
-  await registerGeneric(registrationFlowBody);
+  await registerGeneric(registrationFlowBody)
 }
 
 async function registerMicrosoft() {
@@ -130,7 +151,7 @@ async function registerMicrosoft() {
     method: 'oidc',
     provider: 'microsoft',
   }
-  await registerGeneric(registrationFlowBody);
+  await registerGeneric(registrationFlowBody)
 }
 
 // loginFlowBody must match a variant of UpdateLoginFlowWith<method>Method (included are UpdateLoginFlowWithOidcMethod | UpdateLoginFlowWithPasswordMethod)
@@ -160,3 +181,4 @@ async function registerGeneric(registrationFlowBody) {
     })
 }
 </script>
+<style src="~/assets/login.css"></style>

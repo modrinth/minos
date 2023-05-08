@@ -1,3 +1,5 @@
+import svgLoader from 'vite-svg-loader'
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   runtimeConfig: {
@@ -8,4 +10,22 @@ export default defineNuxtConfig({
     },
   },
   plugins: ['@/plugins/ory-config.js'],
+  vite: {
+    plugins: [
+      svgLoader({
+        svgoConfig: {
+          plugins: [
+            {
+              name: 'preset-default',
+              params: {
+                overrides: {
+                  removeViewBox: false,
+                },
+              },
+            },
+          ],
+        },
+      }),
+    ],
+  },
 })
