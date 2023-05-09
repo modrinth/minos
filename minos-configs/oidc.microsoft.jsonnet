@@ -12,6 +12,7 @@ local claims = std.extVar('claims');
       // The email might be empty if the account isn't linked to an email address.
       // For a human readable identifier, consider using the "preferred_username" claim.
       [if 'email' in claims then 'email' else null]: claims.email,
+      claims.username : preferred_username
     },
   },
 }

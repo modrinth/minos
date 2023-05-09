@@ -23,18 +23,21 @@ pub enum NewUserData {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UserDataOidc {
     pub email: String,
+    pub username: String,
     pub provider: String,
     pub subject: String,
 }
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UserDataPassword {
     pub email: String,
+    pub username: String,
     pub hashed_password: String,
 }
 
 #[derive(Serialize, Debug)]
 pub struct ImportedUserTraits<'a> {
     pub email: &'a str,
+    pub username: &'a str,
 }
 
 // POST /admin/import_account
@@ -44,12 +47,14 @@ pub struct ImportedUserTraits<'a> {
     Input is *one account* or an *array* of accounts, where each account has body matching:
    {
        email: "",
+       username: "",
        provider: "",
        subject: "",
    }
    or
    {
        email: "",
+       username: "",
        hashed_password: "",
    }
    Provider is 'github', 'discord' or other supported oidc method, and subject is that users name within the OIDC
@@ -83,10 +88,10 @@ async fn import_account_helper(
     // Create importable user in required Ory Kratos format
     let create_identity_body = match data {
         NewUserData::NewUserDataOidc(user) => {
-            build_oidc(&user.email, vec![(&user.provider, &user.subject)])
+            build_oidc(&user.email, &user.username, vec![(&user.provider, &user.subject)])
         }
         NewUserData::NewUserDataPassword(user) => {
-            build_password(&user.email, &user.hashed_password)
+            build_password(&user.email, &user.username, &user.hashed_password)
         }
     }?;
     let res = create_identity(configuration, Some(&create_identity_body))
@@ -95,10 +100,10 @@ async fn import_account_helper(
     Ok(res)
 }
 
-fn build_password(email: &str, hashed_password: &str) -> Result<CreateIdentityBody, OryError> {
+fn build_password(email: &str, username: &str, hashed_password: &str) -> Result<CreateIdentityBody, OryError> {
     let mut create_identity_body = CreateIdentityBody::new(
         "default".to_string(),
-        serde_json::to_value(ImportedUserTraits { email })?,
+        serde_json::to_value(ImportedUserTraits { email, username })?,
     );
     // Create credentials and add it to identity body
     let credentials_pass_config = models::IdentityWithCredentialsPasswordConfig {
@@ -120,11 +125,12 @@ fn build_password(email: &str, hashed_password: &str) -> Result<CreateIdentityBo
 
 fn build_oidc(
     email: &str,
+    username: &str,
     provider_subjects: Vec<(&str, &str)>,
 ) -> Result<CreateIdentityBody, OryError> {
     let mut create_identity_body = CreateIdentityBody::new(
         "default".to_string(),
-        serde_json::to_value(ImportedUserTraits { email })?,
+        serde_json::to_value(ImportedUserTraits { email, username })?,
     );
 
     // Create credentials and add it to identity body
@@ -157,7 +163,7 @@ fn build_oidc(
 pub struct LabrinthUser {
     pub id: i64,
     pub github_id: Option<i64>,
-    pub username: String,
+    pub username: Option<String>,
     pub name: Option<String>,
     pub email: Option<String>,
 }
@@ -185,6 +191,7 @@ pub async fn pull_labrinth_github_accounts(
         .filter_map(|u| {
             Some(NewUserData::NewUserDataOidc(UserDataOidc {
                 email: u.email?,
+                username: u.username?,
                 provider: "github".to_string(),
                 subject: u.github_id?.to_string(),
             }))

@@ -7,6 +7,7 @@ use ory_client::models::Session;
 // This is encapsuled by the authentication middleware (returning 401 in middleware if it fails to authenticate)
 #[get("session")]
 pub async fn user_get(session: Option<web::ReqData<Session>>) -> Result<HttpResponse, ApiError> {
+    println!("Inside session!");
     let session = session.ok_or(ApiError::SessionError)?;
     Ok(HttpResponse::Ok().json(&*session))
 }

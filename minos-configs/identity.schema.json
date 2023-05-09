@@ -30,7 +30,21 @@
             }
           },
           "maxLength": 320
+        },
+        "username": {
+          "type": "string",
+          "title": "Username",
+          "ory.sh/kratos": {
+            "credentials": {
+              "password": {
+                "identifier": true
+              }
+            }
+          },
+          "maxLength": 320,
+          "minLength": 6
         }
+
       },
       "required": [
         "email"

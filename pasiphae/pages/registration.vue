@@ -23,7 +23,7 @@
     v-model="email"
     id="email"
     type="text"
-    placeholder="Email"
+    placeholder="Email or username"
   />
   <label for="username" hidden>Username</label>
   <input
@@ -111,6 +111,7 @@ async function registerPassword() {
     method: 'password',
     password: password.value,
     'traits.email': email.value,
+    'traits.username': username.value,
   }
   await registerGeneric(registrationFlowBody)
 }
