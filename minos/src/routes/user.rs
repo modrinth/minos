@@ -37,7 +37,7 @@ pub struct MinosSessionTraits {
 }
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct MinosSessionMetadataPublic {
-    pub github_id: Option<i64>,
+    pub github_id: Option<String>,
     pub discord_id: Option<String>,
     pub google_id: Option<String>,
     pub gitlab_id: Option<String>,
@@ -52,11 +52,11 @@ pub struct MinosUser {
     pub email: String,
     pub name: Option<String>, // real name
     pub github_id: Option<i64>,
-    pub discord_id: Option<String>,
-    pub google_id: Option<String>,
-    pub gitlab_id: Option<String>,
-    pub microsoft_id: Option<String>,
-    pub apple_id: Option<String>,
+    pub discord_id: Option<i64>,
+    pub google_id: Option<i64>,
+    pub gitlab_id: Option<i64>,
+    pub microsoft_id: Option<i64>,
+    pub apple_id: Option<i64>,
 }
 
 #[get("")]
@@ -82,12 +82,13 @@ pub async fn user_get(session: Option<web::ReqData<Session>>) -> Result<HttpResp
         username: traits.username,
         email: traits.email,
         name: None,
-        github_id: metadata_public.github_id,
-        discord_id: metadata_public.discord_id,
-        google_id: metadata_public.google_id,
-        gitlab_id: metadata_public.gitlab_id,
-        microsoft_id: metadata_public.microsoft_id,
-        apple_id: metadata_public.apple_id,
+        // Parse as i64 or propogate parsing error outwards
+        github_id:  metadata_public.github_id.map(|s| s.parse::<i64>()).transpose()?,
+        discord_id: metadata_public.discord_id.map(|s| s.parse::<i64>()).transpose()?,
+        google_id:  metadata_public.google_id.map(|s| s.parse::<i64>()).transpose()?,
+        gitlab_id: metadata_public.gitlab_id.map(|s| s.parse::<i64>()).transpose()?,
+        microsoft_id:  metadata_public.microsoft_id.map(|s| s.parse::<i64>()).transpose()?,
+        apple_id: metadata_public.apple_id.map(|s| s.parse::<i64>()).transpose()?,
     };
     Ok(HttpResponse::Ok().json(minos_user))
 }

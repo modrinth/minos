@@ -14,5 +14,8 @@ local claims = std.extVar('claims');
       [if 'email' in claims then 'email' else null]: claims.email,
       claims.username : preferred_username
     },
+    metadata_public: {
+      microsoft_id: claims.oid
+    }
   },
 }

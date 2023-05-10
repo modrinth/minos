@@ -51,6 +51,8 @@ pub enum ApiError {
     Json(#[from] serde_json::Error),
     #[error("Failed to insert authentication session into request")]
     SessionError,
+    #[error("Failed to parse metadata: {0}")]
+    ParseInt(#[from] std::num::ParseIntError),
     #[error("Reqwest error: {0}")]
     Reqwest(#[from] reqwest::Error),
 }
@@ -61,6 +63,7 @@ impl actix_web::ResponseError for ApiError {
             ApiError::Env(..) => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::Json(..) => actix_web::http::StatusCode::BAD_REQUEST,
             ApiError::Ory(..) => actix_web::http::StatusCode::BAD_REQUEST,
+            ApiError::ParseInt(..) => actix_web::http::StatusCode::BAD_REQUEST,
             ApiError::SessionError => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::Reqwest(..) => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
 
@@ -72,6 +75,7 @@ impl actix_web::ResponseError for ApiError {
             error: match self {
                 ApiError::Env(..) => "environment_error",
                 ApiError::Json(..) => "invalid_input",
+                ApiError::ParseInt(..) => "invalid_input",
                 ApiError::Ory(..) => "invalid_input",
                 ApiError::SessionError => "internal_error",
                 ApiError::Reqwest(..) => "internal_error",

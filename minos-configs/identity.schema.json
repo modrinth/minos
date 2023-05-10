@@ -44,10 +44,9 @@
           "maxLength": 320,
           "minLength": 6
         }
-
       },
       "required": [
-        "email"
+        "email", "username"
       ],
       "additionalProperties": false
     }

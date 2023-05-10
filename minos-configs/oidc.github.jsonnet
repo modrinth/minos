@@ -14,5 +14,8 @@ local claims = {
       [if "email" in claims && claims.email_verified then "email" else null]: claims.email,
       "username": claims.nickname
     },
+    metadata_public: {
+      "github_id": claims.sub
+    }
   },
 }
