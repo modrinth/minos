@@ -36,7 +36,6 @@ selfservice:
   allowed_return_urls:
     - http://127.0.0.1:4455
     - http://localhost:4455
-    - http://lego.com
     - http://127.0.0.1:4000
     - http://127.0.0.1:8000
     - https://modrinth.com

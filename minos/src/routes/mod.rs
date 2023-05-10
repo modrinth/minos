@@ -18,8 +18,9 @@ pub use not_found::not_found;
 pub fn user_config(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("user")
-            .service(user::user_get)
-            .wrap(Authenticator), // Auth middleware
+        .service(user::user_get)
+        .service(user::user_session_get)
+        .wrap(Authenticator), // Auth middleware
     );
 }
 
