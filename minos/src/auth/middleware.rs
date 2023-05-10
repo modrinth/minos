@@ -73,8 +73,6 @@ where
             // Validate session, and if it exists, insert it into the request
             // It can be accessed in-route with "session: Option<web::ReqData<Session>>"
             // let session_result : Result<Session, ApiError> = get_authenticated_session(&config,&req).await;
-            dbg!("BEFOOOOOOOOOOOOOOOOOOOORE @: ");
-
             let session_result: Result<Session, ApiError> =
                 get_authenticated_session(&config, &req)
                     .await
@@ -101,17 +99,11 @@ async fn get_authenticated_session(
 ) -> Result<Session, AuthError> {
     // Cookie
     // Do not parse cookies, simply pass them through directly to GET call inside to_session
-    dbg!("BEFOOOOOOOOOOOOOOOOOOOORE @: ");
-
-    let cookies_unparsed = req.headers().get(COOKIE).and_then(|c| c.to_str().ok());
-    dbg!("BEFOOOOOOOOOOOO2222OOOOOOOORE @: ", &cookies_unparsed);
-
+    let cookies_unparsed: Option<&str> = req.headers().get(COOKIE).and_then(|c| c.to_str().ok());
     if cookies_unparsed.is_none() {
         return Err(AuthError::NoMethodFound);
     }
-    dbg!("Hello @: ", &cookies_unparsed);
     let session: Session = to_session(configuration, None, cookies_unparsed).await?;
-    dbg!("Hello 2: ", &session);
     Ok(session)
 }
 
