@@ -18,9 +18,9 @@ pub use not_found::not_found;
 pub fn user_config(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("user")
-        .service(user::user_get)
-        .service(user::user_session_get)
-        .wrap(Authenticator), // Auth middleware
+            .service(user::user_get)
+            .service(user::user_session_get)
+            .wrap(Authenticator), // Auth middleware
     );
 }
 
@@ -64,7 +64,7 @@ impl actix_web::ResponseError for ApiError {
             ApiError::SessionError => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::Reqwest(..) => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
 
-            ApiError::Unauthorized(..) => actix_web::http::StatusCode::BAD_REQUEST,
+            ApiError::Unauthorized(..) => actix_web::http::StatusCode::UNAUTHORIZED,
         }
     }
     fn error_response(&self) -> actix_web::HttpResponse {

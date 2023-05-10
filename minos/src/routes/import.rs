@@ -87,9 +87,11 @@ async fn import_account_helper(
 ) -> Result<Identity, ApiError> {
     // Create importable user in required Ory Kratos format
     let create_identity_body = match data {
-        NewUserData::NewUserDataOidc(user) => {
-            build_oidc(&user.email, &user.username, vec![(&user.provider, &user.subject)])
-        }
+        NewUserData::NewUserDataOidc(user) => build_oidc(
+            &user.email,
+            &user.username,
+            vec![(&user.provider, &user.subject)],
+        ),
         NewUserData::NewUserDataPassword(user) => {
             build_password(&user.email, &user.username, &user.hashed_password)
         }
@@ -100,7 +102,11 @@ async fn import_account_helper(
     Ok(res)
 }
 
-fn build_password(email: &str, username: &str, hashed_password: &str) -> Result<CreateIdentityBody, OryError> {
+fn build_password(
+    email: &str,
+    username: &str,
+    hashed_password: &str,
+) -> Result<CreateIdentityBody, OryError> {
     let mut create_identity_body = CreateIdentityBody::new(
         "default".to_string(),
         serde_json::to_value(ImportedUserTraits { email, username })?,
