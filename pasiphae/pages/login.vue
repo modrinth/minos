@@ -9,7 +9,7 @@
       <Button class="microsoft-btn" @click="loginMicrosoft"
         ><MicrosoftIcon /> <span>Microsoft</span></Button
       >
-      <Button class="google-btn" @click="loginGithub"><GoogleIcon /> <span>Google</span></Button>
+      <Button class="google-btn" @click="loginGoogle"><GoogleIcon /> <span>Google</span></Button>
       <Button class="apple-btn" @click=""><AppleIcon /> <span>Apple</span></Button>
       <Button class="gitlab-btn" @click=""><GitLabIcon /> <span>GitLab</span></Button>
     </div>

@@ -53,7 +53,7 @@ pub struct MinosUser {
     pub name: Option<String>, // real name
     pub github_id: Option<i64>,
     pub discord_id: Option<i64>,
-    pub google_id: Option<i64>,
+    pub google_id: Option<i128>,
     pub gitlab_id: Option<i64>,
     pub microsoft_id: Option<i64>,
     pub apple_id: Option<i64>,
@@ -85,7 +85,7 @@ pub async fn user_get(session: Option<web::ReqData<Session>>) -> Result<HttpResp
         // Parse as i64 or propogate parsing error outwards
         github_id:  metadata_public.github_id.map(|s| s.parse::<i64>()).transpose()?,
         discord_id: metadata_public.discord_id.map(|s| s.parse::<i64>()).transpose()?,
-        google_id:  metadata_public.google_id.map(|s| s.parse::<i64>()).transpose()?,
+        google_id:  metadata_public.google_id.map(|s| s.parse::<i128>()).transpose()?,
         gitlab_id: metadata_public.gitlab_id.map(|s| s.parse::<i64>()).transpose()?,
         microsoft_id:  metadata_public.microsoft_id.map(|s| s.parse::<i64>()).transpose()?,
         apple_id: metadata_public.apple_id.map(|s| s.parse::<i64>()).transpose()?,
