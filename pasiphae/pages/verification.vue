@@ -7,7 +7,7 @@
       </p>
     </div>
     <p>Enter the code sent to your email to verify it.</p>
-    <input v-model="code" placeholder="Enter code" type="text">
+    <input v-model="code" placeholder="Enter code" type="text" />
     <button @click="verification" class="btn btn-primary continue-btn">Verify Email</button>
   </template>
 </template>

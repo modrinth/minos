@@ -45,6 +45,10 @@ pub struct MinosSessionMetadataPublic {
     pub apple_id: Option<String>,
 }
 
+// MinosUser is a simplified version of the Ory Kratos User object
+// This is used as a communication struct to Labrinth
+// It must be identical to the MinosUser struct in Labrinth, as well
+// as the one defined in minos_user.jsonnet
 #[derive(Serialize, Deserialize, Debug)]
 pub struct MinosUser {
     pub id: String,       // This is the unique generated Ory name
@@ -59,6 +63,8 @@ pub struct MinosUser {
     pub apple_id: Option<i64>,
 }
 
+// /user
+// Get a user as a MinosUser struct (a simplified identity as relevant to labrinth)
 #[get("")]
 pub async fn user_get(session: Option<web::ReqData<Session>>) -> Result<HttpResponse, ApiError> {
     let session = session.ok_or(ApiError::SessionError)?;
@@ -83,12 +89,30 @@ pub async fn user_get(session: Option<web::ReqData<Session>>) -> Result<HttpResp
         email: traits.email,
         name: None,
         // Parse as i64 or propogate parsing error outwards
-        github_id:  metadata_public.github_id.map(|s| s.parse::<i64>()).transpose()?,
-        discord_id: metadata_public.discord_id.map(|s| s.parse::<i64>()).transpose()?,
-        google_id:  metadata_public.google_id.map(|s| s.parse::<i128>()).transpose()?,
-        gitlab_id: metadata_public.gitlab_id.map(|s| s.parse::<i64>()).transpose()?,
-        microsoft_id:  metadata_public.microsoft_id.map(|s| s.parse::<i64>()).transpose()?,
-        apple_id: metadata_public.apple_id.map(|s| s.parse::<i64>()).transpose()?,
+        github_id: metadata_public
+            .github_id
+            .map(|s| s.parse::<i64>())
+            .transpose()?,
+        discord_id: metadata_public
+            .discord_id
+            .map(|s| s.parse::<i64>())
+            .transpose()?,
+        google_id: metadata_public
+            .google_id
+            .map(|s| s.parse::<i128>())
+            .transpose()?,
+        gitlab_id: metadata_public
+            .gitlab_id
+            .map(|s| s.parse::<i64>())
+            .transpose()?,
+        microsoft_id: metadata_public
+            .microsoft_id
+            .map(|s| s.parse::<i64>())
+            .transpose()?,
+        apple_id: metadata_public
+            .apple_id
+            .map(|s| s.parse::<i64>())
+            .transpose()?,
     };
     Ok(HttpResponse::Ok().json(minos_user))
 }

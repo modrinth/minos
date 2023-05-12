@@ -1,4 +1,4 @@
-version: v0.11.1
+version: v0.13.0
 
 dsn: memory
 dev: true
@@ -170,9 +170,31 @@ selfservice:
       after:
         password:
           hooks:
+            - hook: web_hook
+              config:
+                method: POST
+                url: OVERWRITE_ME
+                body: file:///etc/config/kratos/minos_user.jsonnet
+                auth:
+                  type: api_key
+                  config:
+                    name: Modrinth-Admin
+                    value: OVERWRITE_ME
+                    in: header
             - hook: session
         oidc:
           hooks:
+            - hook: web_hook
+              config:
+                method: POST
+                url: OVERWRITE_ME
+                body: file:///etc/config/kratos/minos_user.jsonnet
+                auth:
+                  type: api_key
+                  config:
+                    name: Modrinth-Admin
+                    value: OVERWRITE_ME
+                    in: header
             - hook: session
 
 log:

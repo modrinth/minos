@@ -20,7 +20,9 @@
     <h3 v-if="session">You are logged in!</h3>
     <div v-if="session">
       <p><a class="text-link" :href="logoutUrl" data-testid="logout">Logout</a></p>
-      <p><a class="text-link" :href="verificationFlowEndpoint" data-testid="verify">Verify email</a></p>
+      <p>
+        <a class="text-link" :href="verificationFlowEndpoint" data-testid="verify">Verify email</a>
+      </p>
 
       <p><a class="text-link" :href="settingsFlowEndpoint" data-testid="settings">Settings</a></p>
     </div>

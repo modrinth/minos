@@ -7,41 +7,32 @@
       </p>
     </div>
     <template v-if="mode === 0">
-      <p>Enter your email below and we'll send a recovery link to allow you to recover your account.</p>
+      <p>
+        Enter your email below and we'll send a recovery link to allow you to recover your account.
+      </p>
       <label for="email" hidden>Email</label>
-      <input
-        v-model="email"
-        id="email"
-        type="text"
-        placeholder="Email"
-      />
+      <input v-model="email" id="email" type="text" placeholder="Email" />
       <button @click="recovery" class="btn btn-primary continue-btn">Send recovery email</button>
     </template>
     <template v-else-if="mode === 1">
-      <p>A recovery email has been sent to <strong>{{ email }}</strong>.</p>
+      <p>
+        A recovery email has been sent to <strong>{{ email }}</strong
+        >.
+      </p>
       <p>Check your email and enter the code from it below.</p>
-      <input
-        id="code"
-        v-model="code"
-        type="text"
-        placeholder="Enter code"
-      />
+      <input id="code" v-model="code" type="text" placeholder="Enter code" />
       <button @click="submitCode" class="btn btn-primary continue-btn">Recover</button>
     </template>
     <template v-else-if="mode === 2">
-      <p>You are resetting the password for the Modrinth account associated with <strong>{{ email }}</strong>.</p>
+      <p>
+        You are resetting the password for the Modrinth account associated with
+        <strong>{{ email }}</strong
+        >.
+      </p>
       <label for="password" hidden>Password</label>
-      <input
-        id="password"
-        type="text"
-        placeholder="Password"
-      />
+      <input id="password" type="text" placeholder="Password" />
       <label for="confirm-password" hidden>Password</label>
-      <input
-        id="confirm-password"
-        type="text"
-        placeholder="Confirm password"
-      />
+      <input id="confirm-password" type="text" placeholder="Confirm password" />
       <button class="btn btn-primary continue-btn">Reset password</button>
     </template>
   </template>
