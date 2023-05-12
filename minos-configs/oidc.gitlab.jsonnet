@@ -12,7 +12,11 @@ local claims = {
       // Therefore we only return the email if it (a) exists and (b) is marked verified
       // by Gitlab.
       [if "email" in claims && claims.email_verified then "email" else null]: claims.email,
+      "username": claims.preferred_username,
     },
+    metadata_public: {
+      "gitlab_id": claims.sub
+    }
   },
 }
 

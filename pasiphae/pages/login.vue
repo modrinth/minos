@@ -9,9 +9,9 @@
       <Button class="microsoft-btn" @click="loginMicrosoft"
         ><MicrosoftIcon /> <span>Microsoft</span></Button
       >
-      <Button class="google-btn" @click="loginGithub"><GoogleIcon /> <span>Google</span></Button>
-      <Button class="apple-btn" @click=""><AppleIcon /> <span>Apple</span></Button>
-      <Button class="gitlab-btn" @click=""><GitLabIcon /> <span>GitLab</span></Button>
+      <Button class="google-btn" @click="loginGoogle"><GoogleIcon /> <span>Google</span></Button>
+      <Button class="apple-btn" @click="loginApple"><AppleIcon /> <span>Apple</span></Button>
+      <Button class="gitlab-btn" @click="loginGitlab"><GitLabIcon /> <span>GitLab</span></Button>
     </div>
     <div class="text-divider">
       <div></div>
@@ -119,6 +119,26 @@ async function loginGoogle() {
     csrf_token: extractNestedCsrfToken(flowData.value), // set in generic function
     method: 'oidc',
     provider: 'google',
+  }
+  await loginGeneric(loginFlowBody)
+}
+
+async function loginApple() {
+  // loginFlowBody is an instance of UpdateLoginFlowWithOidcMethod
+  const loginFlowBody = {
+    csrf_token: extractNestedCsrfToken(flowData.value), // set in generic function
+    method: 'oidc',
+    provider: 'apple',
+  }
+  await loginGeneric(loginFlowBody)
+}
+
+async function loginGitlab() {
+  // loginFlowBody is an instance of UpdateLoginFlowWithOidcMethod
+  const loginFlowBody = {
+    csrf_token: extractNestedCsrfToken(flowData.value), // set in generic function
+    method: 'oidc',
+    provider: 'gitlab',
   }
   await loginGeneric(loginFlowBody)
 }

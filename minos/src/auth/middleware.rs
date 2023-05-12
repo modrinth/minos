@@ -99,11 +99,11 @@ async fn get_authenticated_session(
 ) -> Result<Session, AuthError> {
     // Cookie
     // Do not parse cookies, simply pass them through directly to GET call inside to_session
-    let cookies_unparsed = req.headers().get(COOKIE).and_then(|c| c.to_str().ok());
+    let cookies_unparsed: Option<&str> = req.headers().get(COOKIE).and_then(|c| c.to_str().ok());
     if cookies_unparsed.is_none() {
         return Err(AuthError::NoMethodFound);
     }
-    let session = to_session(configuration, None, cookies_unparsed).await?;
+    let session: Session = to_session(configuration, None, cookies_unparsed).await?;
     Ok(session)
 }
 

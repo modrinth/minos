@@ -12,6 +12,10 @@ local claims = {
       // Therefore we only return the email if it (a) exists and (b) is marked verified
       // by GitHub.
       [if "email" in claims && claims.email_verified then "email" else null]: claims.email,
+      "username": claims.nickname
     },
+    metadata_public: {
+      "github_id": claims.sub
+    }
   },
 }

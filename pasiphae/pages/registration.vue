@@ -1,12 +1,16 @@
 <template>
   <h1>Create your account</h1>
   <div class="third-party">
-    <Button class="discord-btn" @click="registerDiscord"><DiscordIcon /> <span>Discord</span></Button>
+    <Button class="discord-btn" @click="registerDiscord"
+      ><DiscordIcon /> <span>Discord</span></Button
+    >
     <Button class="github-btn" @click="registerGithub"><GitHubIcon /> <span>GitHub</span></Button>
-    <Button class="microsoft-btn" @click="registerMicrosoft"><MicrosoftIcon /> <span>Microsoft</span></Button>
+    <Button class="microsoft-btn" @click="registerMicrosoft"
+      ><MicrosoftIcon /> <span>Microsoft</span></Button
+    >
     <Button class="google-btn" @click="registerGoogle"><GoogleIcon /> <span>Google</span></Button>
-    <Button class="apple-btn" @click=""><AppleIcon /> <span>Apple</span></Button>
-    <Button class="gitlab-btn" @click=""><GitLabIcon /> <span>GitLab</span></Button>
+    <Button class="apple-btn" @click="registerApple"><AppleIcon /> <span>Apple</span></Button>
+    <Button class="gitlab-btn" @click="registerGitlab"><GitLabIcon /> <span>GitLab</span></Button>
   </div>
   <div class="text-divider">
     <div></div>
@@ -19,26 +23,11 @@
     </p>
   </div>
   <label for="email" hidden>Email</label>
-  <input
-    v-model="email"
-    id="email"
-    type="text"
-    placeholder="Email"
-  />
+  <input v-model="email" id="email" type="text" placeholder="Email or username" />
   <label for="username" hidden>Username</label>
-  <input
-    v-model="username"
-    id="username"
-    type="text"
-    placeholder="Username"
-  />
+  <input v-model="username" id="username" type="text" placeholder="Username" />
   <label for="password" hidden>Password</label>
-  <input
-    v-model="password"
-    id="password"
-    type="password"
-    placeholder="Password"
-  />
+  <input v-model="password" id="password" type="password" placeholder="Password" />
   <label for="confirm-password" hidden>Password</label>
   <input
     v-model="confirmPassword"
@@ -46,7 +35,9 @@
     type="password"
     placeholder="Confirm password"
   />
-  <button @click="registerPassword" class="btn btn-primary continue-btn">Create account <RightArrowIcon /></button>
+  <button @click="registerPassword" class="btn btn-primary continue-btn">
+    Create account <RightArrowIcon />
+  </button>
   <p>Already have an account yet? <a class="text-link" :href="loginFlowEndpoint">Sign in.</a></p>
 </template>
 
@@ -96,7 +87,7 @@ $oryConfig
 async function registerPassword() {
   if (password.value !== confirmPassword.value) {
     oryUiMsgs.value = [{ text: 'Passwords do not match!' }]
-    return;
+    return
   }
 
   // There are several preset ways to identify people
@@ -111,6 +102,7 @@ async function registerPassword() {
     method: 'password',
     password: password.value,
     'traits.email': email.value,
+    'traits.username': username.value,
   }
   await registerGeneric(registrationFlowBody)
 }
@@ -120,6 +112,26 @@ async function registerGithub() {
     csrf_token: extractNestedCsrfToken(flowData.value),
     method: 'oidc',
     provider: 'github',
+  }
+  await registerGeneric(registrationFlowBody)
+}
+
+async function registerApple() {
+  const registrationFlowBody = {
+    // registrationFlowBody is an instance of UpdateRegistrationFlowWithOidcMethod
+    csrf_token: extractNestedCsrfToken(flowData.value),
+    method: 'oidc',
+    provider: 'apple',
+  }
+  await registerGeneric(registrationFlowBody)
+}
+
+async function registerGitlab() {
+  const registrationFlowBody = {
+    // registrationFlowBody is an instance of UpdateRegistrationFlowWithOidcMethod
+    csrf_token: extractNestedCsrfToken(flowData.value),
+    method: 'oidc',
+    provider: 'gitlab',
   }
   await registerGeneric(registrationFlowBody)
 }
