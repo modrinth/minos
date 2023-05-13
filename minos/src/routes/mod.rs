@@ -18,7 +18,7 @@ pub use not_found::not_found;
 pub fn user_config(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("user")
-            .service(user::user_get)
+            .service(user::user_get) // Get user of current session accessing this endpoint
             .service(user::user_session_get)
             .wrap(Authenticator), // Auth middleware
     );
@@ -30,6 +30,7 @@ pub fn user_config(cfg: &mut web::ServiceConfig) {
 pub fn admin_config(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("admin")
+            .service(user::user_get_id)
             .service(import::import_account)
             .service(import::pull_labrinth_github_accounts)
             .service(delete::delete_all)
@@ -91,6 +92,10 @@ pub enum OryError {
     #[error("Create Identity error: {0}")]
     CreateIdentityError(
         #[from] ory_client::apis::Error<ory_client::apis::identity_api::CreateIdentityError>,
+    ),
+    #[error("Get Identity error: {0}")]
+    GetIdentityError(
+        #[from] ory_client::apis::Error<ory_client::apis::identity_api::GetIdentityError>,
     ),
     #[error("List Identity error: {0}")]
     ListIdentitiesError(

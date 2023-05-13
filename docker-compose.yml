@@ -60,6 +60,9 @@ services:
       - "4000:4000"
     env_file:
       - minos/.env
+    environment: 
+    - ORY_AUTH_BEARER
+    - SENTRY_DSN
 
 volumes:
   kratos-sqlite:
