@@ -37,6 +37,7 @@ pub async fn user_session_get(
 pub struct MinosSessionTraits {
     pub email: String,
     pub username: String,
+    pub name: Option<String>,
 }
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct MinosSessionMetadataPublic {
@@ -46,6 +47,7 @@ pub struct MinosSessionMetadataPublic {
     pub gitlab_id: Option<String>,
     pub microsoft_id: Option<String>,
     pub apple_id: Option<String>,
+    pub default_picture: Option<String>,
 }
 
 // MinosUser is a simplified version of the Ory Kratos User object
@@ -58,6 +60,7 @@ pub struct MinosUser {
     pub username: String, // unique username
     pub email: String,
     pub name: Option<String>, // real name
+    pub default_picture: Option<String>,
     pub github_id: Option<u64>,
     pub discord_id: Option<u64>,
     pub google_id: Option<u128>,
@@ -111,7 +114,8 @@ fn extract_minos_user(identity: &Identity) -> Result<MinosUser, ApiError> {
         id: identity.id.clone(),
         username: traits.username,
         email: traits.email,
-        name: None,
+        name: traits.name,
+        default_picture: metadata_public.default_picture,
         // Parse as i64 or propogate parsing error outwards
         github_id: metadata_public.github_id.map(|s| s.parse()).transpose()?,
         discord_id: metadata_public.discord_id.map(|s| s.parse()).transpose()?,

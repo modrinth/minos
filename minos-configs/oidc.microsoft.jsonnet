@@ -12,10 +12,12 @@ local claims = std.extVar('claims');
       // The email might be empty if the account isn't linked to an email address.
       // For a human readable identifier, consider using the "preferred_username" claim.
       [if 'email' in claims then 'email' else null]: claims.email,
-      claims.username : preferred_username
+      claims.username : preferred_username,
+      [if 'name' in claims then 'name' else null]: claims.name
     },
     metadata_public: {
-      microsoft_id: claims.oid
+      microsoft_id: claims.oid,
+      [if "picture" in claims then "default_picture" else null]: claims.picture
     }
   },
 }
