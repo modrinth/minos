@@ -5,12 +5,17 @@ dev: false
 
 serve:
   public:
-    base_url: https://kratos.modrinth.com/
+    base_url: https://staging-kratos.modrinth.com/
     cors:
       enabled: true
       allowed_origins:
+        - https://staging-auth.modrinth.com
         - https://auth.modrinth.com
+        - http://staging-api.modrinth.com
         - http://api.modrinth.com
+        - https://staging-minos.modrinth.com
+        - https://minos.modrinth.com
+        - https://modrinth.com
         - http://0.0.0.0:4455
       allowed_methods:
         - POST
@@ -31,10 +36,13 @@ serve:
     base_url: http://kratos:4434/
 
 selfservice:
-  default_browser_return_url: https://auth.modrinth.com/
+  default_browser_return_url: https://staging-auth.modrinth.com/
   allowed_return_urls:
+    - https://staging-auth.modrinth.com
     - https://auth.modrinth.com
+    - http://staging-api.modrinth.com
     - http://api.modrinth.com
+    - https://staging-minos.modrinth.com
     - https://minos.modrinth.com
     - https://modrinth.com
 
@@ -131,40 +139,40 @@ selfservice:
                 email_verified:
 
 
-        base_redirect_uri: https://kratos.modrinth.com
+        base_redirect_uri: https://staging-kratos.modrinth.com
 
   flows:
     error:
-      ui_url: https://auth.modrinth.com/error
+      ui_url: https://staging-auth.modrinth.com/error
 
     settings:
-      ui_url: https://auth.modrinth.com/settings
+      ui_url: https://staging-auth.modrinth.com/settings
       privileged_session_max_age: 15m
       required_aal: highest_available
 
     recovery:
       enabled: true
-      ui_url: https://auth.modrinth.com/recovery
+      ui_url: https://staging-auth.modrinth.com/recovery
       use: code
 
     verification:
       enabled: true
-      ui_url: https://auth.modrinth.com/verification
+      ui_url: https://staging-auth.modrinth.com/verification
       use: code
       after:
-        default_browser_return_url: https://auth.modrinth.com/
+        default_browser_return_url: https://staging-auth.modrinth.com/
 
     logout:
       after:
-        default_browser_return_url: https://auth.modrinth.com/login
+        default_browser_return_url: https://staging-auth.modrinth.com/login
 
     login:
-      ui_url: https://auth.modrinth.com/login
+      ui_url: https://staging-auth.modrinth.com/login
       lifespan: 10m
 
     registration:
       lifespan: 10m
-      ui_url: https://auth.modrinth.com/registration
+      ui_url: https://staging-auth.modrinth.com/registration
       after:
         password:
           hooks:
