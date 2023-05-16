@@ -5,13 +5,13 @@ dev: false
 
 serve:
   public:
-    base_url: http://127.0.0.1:4433/
+    base_url: https://staging-kratos.modrinth.com/
     cors:
       enabled: true
       allowed_origins:
-        - http://127.0.0.1:4455
-        - http://127.0.0.1:8000
-        - http://127.0.0.1:4000
+        - https://staging-auth.modrinth.com
+        - https://staging-api.modrinth.com
+        - https://staging-minos.modrinth.com
         - https://modrinth.com
         - http://0.0.0.0:4455
       allowed_methods:
@@ -33,11 +33,11 @@ serve:
     base_url: http://kratos:4434/
 
 selfservice:
-  default_browser_return_url: http://127.0.0.1:4455/
+  default_browser_return_url: https://staging-auth.modrinth.com/
   allowed_return_urls:
-    - http://127.0.0.1:4455
-    - http://127.0.0.1:8000
-    - http://127.0.0.1:4000
+    - https://staging-auth.modrinth.com
+    - https://staging-api.modrinth.com
+    - https://staging-minos.modrinth.com
     - https://modrinth.com
 
   methods:
@@ -133,40 +133,40 @@ selfservice:
                 email_verified:
 
 
-        base_redirect_uri: http://127.0.0.1:4433
+        base_redirect_uri: https://staging-kratos.modrinth.com
 
   flows:
     error:
-      ui_url: http://127.0.0.1:4455/error
+      ui_url: https://staging-auth.modrinth.com/error
 
     settings:
-      ui_url: http://127.0.0.1:4455/settings
+      ui_url: https://staging-auth.modrinth.com/settings
       privileged_session_max_age: 15m
       required_aal: highest_available
 
     recovery:
       enabled: true
-      ui_url: http://127.0.0.1:4455/recovery
+      ui_url: https://staging-auth.modrinth.com/recovery
       use: code
 
     verification:
       enabled: true
-      ui_url: http://127.0.0.1:4455/verification
+      ui_url: https://staging-auth.modrinth.com/verification
       use: code
       after:
-        default_browser_return_url: http://127.0.0.1:4455/
+        default_browser_return_url: https://staging-auth.modrinth.com/
 
     logout:
       after:
-        default_browser_return_url: http://127.0.0.1:4455/login
+        default_browser_return_url: https://staging-auth.modrinth.com/login
 
     login:
-      ui_url: http://127.0.0.1:4455/login
+      ui_url: https://staging-auth.modrinth.com/login
       lifespan: 10m
 
     registration:
       lifespan: 10m
-      ui_url: http://127.0.0.1:4455/registration
+      ui_url: https://staging-auth.modrinth.com/registration
       after:
         password:
           hooks:
