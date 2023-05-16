@@ -9,7 +9,7 @@ serve:
     cors:
       enabled: true
       allowed_origins:
-        - https://pasiphae.modrinth.com
+        - https://auth.modrinth.com
         - http://0.0.0.0:4455
       allowed_methods:
         - POST
@@ -30,9 +30,9 @@ serve:
     base_url: http://kratos:4434/
 
 selfservice:
-  default_browser_return_url: https://pasiphae.modrinth.com/
+  default_browser_return_url: https://auth.modrinth.com/
   allowed_return_urls:
-    - https://pasiphae.modrinth.com
+    - https://auth.modrinth.com
     - https://minos.modrinth.com
     - https://modrinth.com
 
@@ -133,36 +133,36 @@ selfservice:
 
   flows:
     error:
-      ui_url: https://pasiphae.modrinth.com/error
+      ui_url: https://auth.modrinth.com/error
 
     settings:
-      ui_url: https://pasiphae.modrinth.com/settings
+      ui_url: https://auth.modrinth.com/settings
       privileged_session_max_age: 15m
       required_aal: highest_available
 
     recovery:
       enabled: true
-      ui_url: https://pasiphae.modrinth.com/recovery
+      ui_url: https://auth.modrinth.com/recovery
       use: code
 
     verification:
       enabled: true
-      ui_url: https://pasiphae.modrinth.com/verification
+      ui_url: https://auth.modrinth.com/verification
       use: code
       after:
-        default_browser_return_url: https://pasiphae.modrinth.com/
+        default_browser_return_url: https://auth.modrinth.com/
 
     logout:
       after:
-        default_browser_return_url: https://pasiphae.modrinth.com/login
+        default_browser_return_url: https://auth.modrinth.com/login
 
     login:
-      ui_url: https://pasiphae.modrinth.com/login
+      ui_url: https://auth.modrinth.com/login
       lifespan: 10m
 
     registration:
       lifespan: 10m
-      ui_url: https://pasiphae.modrinth.com/registration
+      ui_url: https://auth.modrinth.com/registration
       after:
         password:
           hooks:
