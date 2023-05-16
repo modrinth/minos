@@ -10,6 +10,7 @@ serve:
       enabled: true
       allowed_origins:
         - https://auth.modrinth.com
+        - http://api.modrinth.com
         - http://0.0.0.0:4455
       allowed_methods:
         - POST
@@ -33,6 +34,7 @@ selfservice:
   default_browser_return_url: https://auth.modrinth.com/
   allowed_return_urls:
     - https://auth.modrinth.com
+    - http://api.modrinth.com
     - https://minos.modrinth.com
     - https://modrinth.com
 
