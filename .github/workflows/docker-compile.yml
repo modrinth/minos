@@ -1,0 +1,66 @@
+name: docker-build
+
+on:
+  push:
+    branches:
+      - '**'
+    tags:
+      - 'v*'
+  pull_request:
+
+jobs:
+  docker_minos:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Fetch docker metadata for minos
+        id: docker_meta_minos
+        uses: docker/metadata-action@v3
+        with:
+          images: ghcr.io/modrinth/minos
+      -
+        name: Login to GitHub Images
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      -
+        name: Build and push minos
+        id: docker_build_minos
+        uses: docker/build-push-action@v2
+        with:
+          context: ./minos
+          file: ./minos/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.docker_meta_minos.outputs.tags }}
+          labels: ${{ steps.docker_meta_minos.outputs.labels }}
+
+  docker_pasiphae:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Fetch docker metadata for pasiphae
+        id: docker_meta_pasiphae
+        uses: docker/metadata-action@v3
+        with:
+          images: ghcr.io/modrinth/pasiphae
+      -
+        name: Login to GitHub Images
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      -
+        name: Build and push pasiphae
+        id: docker_build_pasiphae
+        uses: docker/build-push-action@v2
+        with:
+          context: ./pasiphae
+          file: ./pasiphae/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.docker_meta_pasiphae.outputs.tags }}
+          labels: ${{ steps.docker_meta_pasiphae.outputs.labels }}
