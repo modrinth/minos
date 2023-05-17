@@ -3,16 +3,12 @@ services:
   kratos-migrate:
     image: oryd/kratos:v0.13.0
     environment:
-      - DSN=sqlite:///var/lib/sqlite/db.sqlite?_fk=true&mode=rwc
+      - DSN=${DATABASE_URL}
     volumes:
-      - type: volume
-        source: kratos-sqlite
-        target: /var/lib/sqlite
-        read_only: false
       - type: bind
         source: ./minos-configs
         target: /etc/config/kratos
-    entrypoint: /bin/sh -c "/usr/bin/kratos -c /etc/config/kratos/kratos.yml migrate sql -e --yes >/dev/null 2>&1"
+    entrypoint: /bin/sh -c "/usr/bin/kratos -c /etc/config/kratos/${KRATOS_YML} migrate sql -e --yes >/dev/null 2>&1"
     restart: on-failure
   kratos:
     depends_on:
@@ -39,30 +35,31 @@ services:
     - SELFSERVICE_METHODS_OIDC_CONFIG_PROVIDERS_5_CLIENT_SECRET
     - SECRETS_COOKIE
     - SECRETS_CIPHER
-    - DSN=sqlite:///var/lib/sqlite/db.sqlite?_fk=true
-    - LOG_LEVEL=trace
+    - DSN=${DATABASE_URL}
+    - LOG_LEVEL
     ports:
       - '4433:4433' # public
       # - '4434:4434' # admin. can be uncommented for testing- but should be removed in prod.
     restart: unless-stopped
-    command: serve -c /etc/config/kratos/kratos.yml --dev --watch-courier
+    command: serve -c /etc/config/kratos/${KRATOS_YML} --dev --watch-courier
     volumes:
-      - type: volume
-        source: kratos-sqlite
-        target: /var/lib/sqlite
-        read_only: false
       - type: bind
         source: ./minos-configs
         target: /etc/config/kratos
   minos:
     build: minos
+    # image: ghcr.io/modrinth/minos:staging
     ports:
       - "4000:4000"
     env_file:
-      - minos/.env
+      - .env
     environment: 
     - ORY_AUTH_BEARER
     - SENTRY_DSN
-
-volumes:
-  kratos-sqlite:
+  pasiphae:
+    build: pasiphae
+    # image: ghcr.io/modrinth/pasiphae:staging
+    env_file:
+      - .env
+    ports:
+      - "4455:4455"
