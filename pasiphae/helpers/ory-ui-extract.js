@@ -61,3 +61,41 @@ export function extractNestedCsrfToken(data) {
   }
   return '' // Return empty csrf token if it doesn't exist
 }
+
+// Extracts providers from ORY UI nodes
+// labeled with 'provider' attribute
+const preferred_order = ['github', 'discord', 'google', 'apple', 'microsoft', 'gitlab']
+export function extractOidcProviders(data) {
+  let providers = []
+  const returnedNodes = data.ui.nodes
+  for (let i = 0; i < returnedNodes.length; i++) {
+    console.log(JSON.stringify(returnedNodes[i]))
+
+    if (returnedNodes[i].group === 'oidc' && returnedNodes[i].attributes.name === 'provider') {
+      providers.push(returnedNodes[i].attributes.value)
+    }
+  }
+  return providers.sort((a, b) => preferred_order.indexOf(a) - preferred_order.indexOf(b))
+}
+// labeled with 'link' attribute
+export function extractOidcLinkProviders(data) {
+  let providers = []
+  const returnedNodes = data.ui.nodes
+  for (let i = 0; i < returnedNodes.length; i++) {
+    if (returnedNodes[i].group === 'oidc' && returnedNodes[i].attributes.name === 'link') {
+      providers.push(returnedNodes[i].attributes.value)
+    }
+  }
+  return providers.sort((a, b) => preferred_order.indexOf(a) - preferred_order.indexOf(b))
+}
+// labeled with 'unlink' attribute
+export function extractOidcUnlinkProviders(data) {
+  let providers = []
+  const returnedNodes = data.ui.nodes
+  for (let i = 0; i < returnedNodes.length; i++) {
+    if (returnedNodes[i].group === 'oidc' && returnedNodes[i].attributes.name === 'unlink') {
+      providers.append(returnedNodes[i].attributes.value)
+    }
+  }
+  return providers.sort((a, b) => preferred_order.indexOf(a) - preferred_order.indexOf(b))
+}

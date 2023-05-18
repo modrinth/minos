@@ -1,16 +1,14 @@
 <template>
   <h1>Create your account</h1>
   <div class="third-party">
-    <Button class="discord-btn" @click="registerDiscord"
-      ><DiscordIcon /> <span>Discord</span></Button
+    <Button
+      v-for="provider in providers"
+      :key="provider"
+      :class="`${provider}-btn`"
+      @click="register(provider)"
     >
-    <Button class="github-btn" @click="registerGithub"><GitHubIcon /> <span>GitHub</span></Button>
-    <Button class="microsoft-btn" @click="registerMicrosoft"
-      ><MicrosoftIcon /> <span>Microsoft</span></Button
-    >
-    <Button class="google-btn" @click="registerGoogle"><GoogleIcon /> <span>Google</span></Button>
-    <Button class="apple-btn" @click="registerApple"><AppleIcon /> <span>Apple</span></Button>
-    <Button class="gitlab-btn" @click="registerGitlab"><GitLabIcon /> <span>GitLab</span></Button>
+      <component :is="getIcon(provider)" /> <span>{{ capitalizeFirstLetter(provider) }}</span>
+    </Button>
   </div>
   <div class="text-divider">
     <div></div>
@@ -52,6 +50,7 @@ import {
   extractNestedCsrfToken,
   extractNestedErrorMessagesFromError,
   extractNestedErrorMessagesFromData,
+  extractOidcProviders,
 } from '~/helpers/ory-ui-extract'
 
 const config = useRuntimeConfig()
@@ -68,16 +67,18 @@ const confirmPassword = ref('')
 
 // Attempt to get flow information on page load
 const flowData = ref(null)
+const providers = ref([])
 $oryConfig
   .getRegistrationFlow({ id: route.query.flow || '' })
   .then((r) => {
     flowData.value = r.data
+    providers.value = extractOidcProviders(r.data)
     oryUiMsgs.value = extractNestedErrorMessagesFromData(r.data)
   })
   // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
   // Any other error we just leave the page
   .catch((e) => {
-    if (e.response.status === 404) {
+    if (e.response && e.response.status === 404) {
       navigateTo(config.oryUrl + '/self-service/registration/browser', { external: true })
     } else {
       navigateTo('/')
@@ -106,62 +107,34 @@ async function registerPassword() {
   }
   await registerGeneric(registrationFlowBody)
 }
-async function registerGithub() {
-  const registrationFlowBody = {
-    // registrationFlowBody is an instance of UpdateRegistrationFlowWithOidcMethod
-    csrf_token: extractNestedCsrfToken(flowData.value),
-    method: 'oidc',
-    provider: 'github',
-  }
-  await registerGeneric(registrationFlowBody)
+
+const icons = {
+  discord: DiscordIcon,
+  google: GoogleIcon,
+  apple: AppleIcon,
+  microsoft: MicrosoftIcon,
+  gitlab: GitLabIcon,
+  github: GitHubIcon,
 }
 
-async function registerApple() {
-  const registrationFlowBody = {
-    // registrationFlowBody is an instance of UpdateRegistrationFlowWithOidcMethod
-    csrf_token: extractNestedCsrfToken(flowData.value),
-    method: 'oidc',
-    provider: 'apple',
-  }
-  await registerGeneric(registrationFlowBody)
+function capitalizeFirstLetter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1)
 }
 
-async function registerGitlab() {
-  const registrationFlowBody = {
-    // registrationFlowBody is an instance of UpdateRegistrationFlowWithOidcMethod
-    csrf_token: extractNestedCsrfToken(flowData.value),
-    method: 'oidc',
-    provider: 'gitlab',
-  }
-  await registerGeneric(registrationFlowBody)
+async function register(provider) {
+  await registerOidc(provider)
 }
 
-async function registerDiscord() {
-  const registrationFlowBody = {
-    // registrationFlowBody is an instance of UpdateRegistrationFlowWithOidcMethod
-    csrf_token: extractNestedCsrfToken(flowData.value),
-    method: 'oidc',
-    provider: 'discord',
-  }
-  await registerGeneric(registrationFlowBody)
+function getIcon(provider) {
+  return icons[provider]
 }
 
-async function registerGoogle() {
+async function registerOidc(provider) {
   const registrationFlowBody = {
     // registrationFlowBody is an instance of UpdateRegistrationFlowWithOidcMethod
     csrf_token: extractNestedCsrfToken(flowData.value),
     method: 'oidc',
-    provider: 'google',
-  }
-  await registerGeneric(registrationFlowBody)
-}
-
-async function registerMicrosoft() {
-  const registrationFlowBody = {
-    // registrationFlowBody is an instance of UpdateRegistrationFlowWithOidcMethod
-    csrf_token: extractNestedCsrfToken(flowData.value),
-    method: 'oidc',
-    provider: 'microsoft',
+    provider: provider,
   }
   await registerGeneric(registrationFlowBody)
 }
