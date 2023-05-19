@@ -23,6 +23,7 @@ export function extractNestedErrorMessagesFromError(e) {
 }
 export function extractNestedErrorMessagesFromData(data) {
   let errs = []
+  console.log(data)
   if ('messages' in data.ui) {
     errs = errs.concat(data.ui.messages)
   } else if ('nodes' in data.ui) {
@@ -94,7 +95,7 @@ export function extractOidcUnlinkProviders(data) {
   const returnedNodes = data.ui.nodes
   for (let i = 0; i < returnedNodes.length; i++) {
     if (returnedNodes[i].group === 'oidc' && returnedNodes[i].attributes.name === 'unlink') {
-      providers.append(returnedNodes[i].attributes.value)
+      providers.push(returnedNodes[i].attributes.value)
     }
   }
   return providers.sort((a, b) => preferred_order.indexOf(a) - preferred_order.indexOf(b))

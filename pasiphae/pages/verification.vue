@@ -46,7 +46,9 @@ $oryConfig
   // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
   // Any other error we just leave the page
   .catch((e) => {
-    if (e.response.status === 404) {
+    if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
+      window.location.href = e.response.data.redirect_browser_to
+    } else if (e.response.status === 404) {
       navigateTo(config.oryUrl + '/self-service/settings/browser', { external: true })
     } else {
       navigateTo('')

@@ -78,7 +78,9 @@ $oryConfig
   // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
   // Any other error we just leave the page
   .catch((e) => {
-    if (e.response && e.response.status === 404) {
+    if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
+      window.location.href = e.response.data.redirect_browser_to
+    } else if ('response' in e && e.response.status === 404) {
       navigateTo(config.oryUrl + '/self-service/registration/browser', { external: true })
     } else {
       navigateTo('/')
@@ -156,7 +158,9 @@ async function registerGeneric(registrationFlowBody) {
       // Using Social-integrated login/registration will return a 422: Unprocessable Entity error with a redirection link.
       // We use this to continue the flow.
       // (TODO: this is weird, is this a bug?)
-      if (e.response.status === 422) {
+      if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
+        window.location.href = e.response.data.redirect_browser_to
+      } else if (e.response.status === 422) {
         window.location.href = e.response.data.redirect_browser_to
         return
       }

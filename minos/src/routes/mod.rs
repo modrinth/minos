@@ -9,6 +9,7 @@ use thiserror::Error;
 pub mod delete;
 pub mod import;
 pub mod not_found;
+pub mod oidc;
 pub mod user;
 
 pub use not_found::not_found;
@@ -30,8 +31,9 @@ pub fn user_config(cfg: &mut web::ServiceConfig) {
 pub fn admin_config(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("admin")
-            .service(user::user_get_id)
-            .service(import::import_account)
+        .service(user::user_get_id)
+        .service(oidc::oidc_reload)
+        .service(import::import_account)
             .service(import::pull_labrinth_github_accounts)
             .service(delete::delete_all)
             .wrap(HttpAuthentication::bearer(
@@ -89,6 +91,9 @@ impl actix_web::ResponseError for ApiError {
 
 #[derive(Error, Debug)]
 pub enum OryError {
+    #[error("Missing expected Identity data: {0}")]
+    MissingIdentityData(String),
+
     #[error("Create Identity error: {0}")]
     CreateIdentityError(
         #[from] ory_client::apis::Error<ory_client::apis::identity_api::CreateIdentityError>,
@@ -96,6 +101,10 @@ pub enum OryError {
     #[error("Get Identity error: {0}")]
     GetIdentityError(
         #[from] ory_client::apis::Error<ory_client::apis::identity_api::GetIdentityError>,
+    ),
+    #[error("Update Identity error: {0}")]
+    PatchIdentityError(
+        #[from] ory_client::apis::Error<ory_client::apis::identity_api::PatchIdentityError>,
     ),
     #[error("List Identity error: {0}")]
     ListIdentitiesError(
