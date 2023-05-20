@@ -167,47 +167,7 @@ fn build_oidc(
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct LabrinthUser {
-    pub id: i64,
+    pub id: String,
     pub github_id: Option<i64>,
-    pub username: Option<String>,
-    pub name: Option<String>,
-    pub email: Option<String>,
 }
 
-// POST pull_labrinth
-// Requires admin bearer token as header.
-#[post("pull_labrinth")]
-pub async fn pull_labrinth_github_accounts(
-    configuration: web::Data<Configuration>,
-) -> Result<HttpResponse, ApiError> {
-    let client = reqwest::Client::new();
-
-    let users: Vec<LabrinthUser> = client
-        .get(format!("{}minos/export", dotenvy::var("LABRINTH_API_URL")?))
-        .header("Accept", "application/json")
-        .header("Accept-Language", "en_US")
-        .send()
-        .await?
-        .json()
-        .await?;
-
-    // Convert to ory format and import
-    let users: Vec<NewUserData> = users
-        .into_iter()
-        .filter_map(|u| {
-            Some(NewUserData::NewUserDataOidc(UserDataOidc {
-                email: u.email?,
-                username: u.username?,
-                provider: "github".to_string(),
-                subject: u.github_id?.to_string(),
-            }))
-        })
-        .collect();
-
-    // TODO: make these import asynchronously
-    let res = users
-        .iter()
-        .map(|f| import_account_helper(f, &configuration));
-    let res = try_join_all(res).await?;
-    Ok(HttpResponse::Ok().json(res))
-}

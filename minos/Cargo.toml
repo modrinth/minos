@@ -18,6 +18,8 @@ actix-web-httpauth = "0.8.0"
 
 http = "0.2.9"
 
+sqlx = { version = "0.6.2", features = ["runtime-actix-rustls", "postgres", "chrono", "offline", "macros", "migrate", "decimal", "json", "uuid"] }
+
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 chrono = { version  = "0.4.19", features = ["serde"] }
