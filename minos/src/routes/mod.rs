@@ -7,7 +7,6 @@ use actix_web_httpauth::middleware::HttpAuthentication;
 use thiserror::Error;
 
 pub mod delete;
-pub mod import;
 pub mod not_found;
 pub mod oidc;
 pub mod user;
@@ -31,9 +30,8 @@ pub fn user_config(cfg: &mut web::ServiceConfig) {
 pub fn admin_config(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("admin")
-        .service(user::user_get_id)
-        .service(oidc::oidc_reload)
-        .service(import::import_account)
+            .service(user::user_get_id)
+            .service(oidc::oidc_reload)
             .service(delete::delete_all)
             .wrap(HttpAuthentication::bearer(
                 crate::auth::middleware::admin_validator,
@@ -59,8 +57,6 @@ pub enum ApiError {
     ParseUuid(#[from] uuid::Error),
     #[error("Reqwest error: {0}")]
     Reqwest(#[from] reqwest::Error),
-    #[error("OIDC account error: {0}")]
-    Oidc(String),
     #[error("Database error: {0}")]
     Database(#[from] sqlx::Error),
 }
@@ -72,7 +68,6 @@ impl actix_web::ResponseError for ApiError {
             ApiError::Json(..) => actix_web::http::StatusCode::BAD_REQUEST,
             ApiError::Ory(..) => actix_web::http::StatusCode::BAD_REQUEST,
             ApiError::ParseInt(..) => actix_web::http::StatusCode::BAD_REQUEST,
-            ApiError::Oidc(..) => actix_web::http::StatusCode::BAD_REQUEST,
             ApiError::SessionError => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::Reqwest(..) => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::ParseUuid(..) => actix_web::http::StatusCode::BAD_REQUEST,
@@ -90,7 +85,6 @@ impl actix_web::ResponseError for ApiError {
                 ApiError::SessionError => "internal_error",
                 ApiError::Reqwest(..) => "internal_error",
                 ApiError::Unauthorized(..) => "unauthorized",
-                ApiError::Oidc(..) => "invalid_input",
                 ApiError::ParseUuid(..) => "invalid_input",
                 ApiError::Database(..) => "internal_error",
             },
@@ -136,9 +130,14 @@ pub enum OryError {
     UpdateLoginFlowError(
         #[from] ory_client::apis::Error<ory_client::apis::frontend_api::UpdateLoginFlowError>,
     ),
+    #[error("Get settings flow error: {0}")]
+    GetSettingsFlowError(
+        #[from] ory_client::apis::Error<ory_client::apis::frontend_api::GetSettingsFlowError>,
+    ),
     #[error("Create settings flow error: {0}")]
     CreateSettingsFlowError(
-        #[from] ory_client::apis::Error<ory_client::apis::frontend_api::CreateNativeSettingsFlowError>,
+        #[from]
+        ory_client::apis::Error<ory_client::apis::frontend_api::CreateNativeSettingsFlowError>,
     ),
     #[error("Update settings flow error: {0}")]
     UpdateSettingsFlowError(

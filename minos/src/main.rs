@@ -54,7 +54,6 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("Database connection failed");
 
-
     // Start server
     info!("Starting Actix HTTP server!");
     HttpServer::new(move || {
@@ -73,7 +72,6 @@ async fn main() -> std::io::Result<()> {
                     .max_age(3600),
             )
             .app_data(web::Data::new(pool.clone()))
-
             .app_data(web::Data::new(configuration.clone()))
             .configure(routes::user_config)
             .configure(routes::admin_config)

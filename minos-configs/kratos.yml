@@ -150,6 +150,8 @@ selfservice:
               method: POST
               url: OVERWRITE_ME
               body: file:///etc/config/kratos/id.jsonnet
+              response:
+                parse: true
               auth:
                 type: api_key
                 config:
