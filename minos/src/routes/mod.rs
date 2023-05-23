@@ -7,8 +7,8 @@ use actix_web_httpauth::middleware::HttpAuthentication;
 use thiserror::Error;
 
 pub mod delete;
-pub mod import;
 pub mod not_found;
+pub mod oidc;
 pub mod user;
 
 pub use not_found::not_found;
@@ -31,8 +31,7 @@ pub fn admin_config(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("admin")
             .service(user::user_get_id)
-            .service(import::import_account)
-            .service(import::pull_labrinth_github_accounts)
+            .service(oidc::oidc_reload)
             .service(delete::delete_all)
             .wrap(HttpAuthentication::bearer(
                 crate::auth::middleware::admin_validator,
@@ -54,8 +53,12 @@ pub enum ApiError {
     SessionError,
     #[error("Failed to parse metadata: {0}")]
     ParseInt(#[from] std::num::ParseIntError),
+    #[error("Failed to parse uuid: {0}")]
+    ParseUuid(#[from] uuid::Error),
     #[error("Reqwest error: {0}")]
     Reqwest(#[from] reqwest::Error),
+    #[error("Database error: {0}")]
+    Database(#[from] sqlx::Error),
 }
 
 impl actix_web::ResponseError for ApiError {
@@ -67,8 +70,9 @@ impl actix_web::ResponseError for ApiError {
             ApiError::ParseInt(..) => actix_web::http::StatusCode::BAD_REQUEST,
             ApiError::SessionError => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::Reqwest(..) => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
-
+            ApiError::ParseUuid(..) => actix_web::http::StatusCode::BAD_REQUEST,
             ApiError::Unauthorized(..) => actix_web::http::StatusCode::UNAUTHORIZED,
+            ApiError::Database(..) => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
     fn error_response(&self) -> actix_web::HttpResponse {
@@ -81,6 +85,8 @@ impl actix_web::ResponseError for ApiError {
                 ApiError::SessionError => "internal_error",
                 ApiError::Reqwest(..) => "internal_error",
                 ApiError::Unauthorized(..) => "unauthorized",
+                ApiError::ParseUuid(..) => "invalid_input",
+                ApiError::Database(..) => "internal_error",
             },
             description: &self.to_string(),
         })
@@ -89,6 +95,9 @@ impl actix_web::ResponseError for ApiError {
 
 #[derive(Error, Debug)]
 pub enum OryError {
+    #[error("Missing expected Identity data: {0}")]
+    MissingIdentityData(String),
+
     #[error("Create Identity error: {0}")]
     CreateIdentityError(
         #[from] ory_client::apis::Error<ory_client::apis::identity_api::CreateIdentityError>,
@@ -96,6 +105,14 @@ pub enum OryError {
     #[error("Get Identity error: {0}")]
     GetIdentityError(
         #[from] ory_client::apis::Error<ory_client::apis::identity_api::GetIdentityError>,
+    ),
+    #[error("Patch Identity error: {0}")]
+    PatchIdentityError(
+        #[from] ory_client::apis::Error<ory_client::apis::identity_api::PatchIdentityError>,
+    ),
+    #[error("Update Identity error: {0}")]
+    UpdateIdentityError(
+        #[from] ory_client::apis::Error<ory_client::apis::identity_api::UpdateIdentityError>,
     ),
     #[error("List Identity error: {0}")]
     ListIdentitiesError(
@@ -112,6 +129,19 @@ pub enum OryError {
     #[error("Update login flow error: {0}")]
     UpdateLoginFlowError(
         #[from] ory_client::apis::Error<ory_client::apis::frontend_api::UpdateLoginFlowError>,
+    ),
+    #[error("Get settings flow error: {0}")]
+    GetSettingsFlowError(
+        #[from] ory_client::apis::Error<ory_client::apis::frontend_api::GetSettingsFlowError>,
+    ),
+    #[error("Create settings flow error: {0}")]
+    CreateSettingsFlowError(
+        #[from]
+        ory_client::apis::Error<ory_client::apis::frontend_api::CreateNativeSettingsFlowError>,
+    ),
+    #[error("Update settings flow error: {0}")]
+    UpdateSettingsFlowError(
+        #[from] ory_client::apis::Error<ory_client::apis::frontend_api::UpdateSettingsFlowError>,
     ),
 
     #[error("Error while deserializing: {0}")]

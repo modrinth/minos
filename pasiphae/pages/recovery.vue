@@ -64,7 +64,9 @@ $oryConfig
   // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
   // Any other error we just leave the page
   .catch((e) => {
-    if (e.response.status === 404) {
+    if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
+      window.location.href = e.response.data.redirect_browser_to
+    } else if (e.response.status === 404) {
       navigateTo(config.oryUrl + '/self-service/recovery/browser', { external: true })
     } else {
       navigateTo('/')
@@ -88,9 +90,12 @@ async function recovery() {
       mode.value = 1
     })
     .catch((e) => {
-      console.log(e)
-      // Get displayable error messsages from nested returned Ory UI elements
-      oryUiMsgs.value = extractNestedErrorMessagesFromError(e)
+      if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
+        window.location.href = e.response.data.redirect_browser_to
+      } else {
+        // Get displayable error messsages from nested returned Ory UI elements
+        oryUiMsgs.value = extractNestedErrorMessagesFromError(e)
+      }
     })
 }
 
@@ -117,11 +122,10 @@ async function submitCode() {
       // May return a 422: Unprocessable Entity error with a redirection link.
       // We use this to continue the flow.
       // (TODO: this is weird, is this a bug?)
-      if (e.response.status === 422) {
+      if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
         window.location.href = e.response.data.redirect_browser_to
         return
       }
-
       // Get displayable error messsages from nested returned Ory UI elements
       oryUiMsgs.value = extractNestedErrorMessagesFromError(e)
     })

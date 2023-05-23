@@ -2,16 +2,14 @@
   <template v-if="flowData">
     <h1>Continue with</h1>
     <div class="third-party">
-      <Button class="discord-btn" @click="loginDiscord"
-        ><DiscordIcon /> <span>Discord</span></Button
+      <Button
+        v-for="provider in providers"
+        :key="provider"
+        :class="`${provider}-btn`"
+        @click="login(provider)"
       >
-      <Button class="github-btn" @click="loginGithub"><GitHubIcon /> <span>GitHub</span></Button>
-      <Button class="microsoft-btn" @click="loginMicrosoft"
-        ><MicrosoftIcon /> <span>Microsoft</span></Button
-      >
-      <Button class="google-btn" @click="loginGoogle"><GoogleIcon /> <span>Google</span></Button>
-      <Button class="apple-btn" @click="loginApple"><AppleIcon /> <span>Apple</span></Button>
-      <Button class="gitlab-btn" @click="loginGitlab"><GitLabIcon /> <span>GitLab</span></Button>
+        <component :is="getIcon(provider)" /> <span>{{ capitalizeFirstLetter(provider) }}</span>
+      </Button>
     </div>
     <div class="text-divider">
       <div></div>
@@ -50,6 +48,7 @@ import GitLabIcon from '@/assets/gitlab.svg'
 import {
   extractNestedCsrfToken,
   extractNestedErrorMessagesFromError,
+  extractOidcProviders,
   extractNestedErrorMessagesFromData,
 } from '~/helpers/ory-ui-extract'
 
@@ -66,21 +65,46 @@ const password = ref('')
 
 // Attempt to get flow information on page load
 const flowData = ref(null)
+const providers = ref([])
 $oryConfig
   .getLoginFlow({ id: route.query.flow || '' })
   .then((r) => {
     flowData.value = r.data
+    providers.value = extractOidcProviders(r.data)
     oryUiMsgs.value = extractNestedErrorMessagesFromData(r.data)
   })
   // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
   // Any other error we just leave the page
   .catch((e) => {
-    if (e.response.status === 404) {
+    if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
+      window.location.href = e.response.data.redirect_browser_to
+    } else if (e.response && e.response.status === 404) {
       navigateTo(config.oryUrl + '/self-service/login/browser', { external: true })
     } else {
       navigateTo('/')
     }
   })
+
+const icons = {
+  discord: DiscordIcon,
+  google: GoogleIcon,
+  apple: AppleIcon,
+  microsoft: MicrosoftIcon,
+  gitlab: GitLabIcon,
+  github: GitHubIcon,
+}
+
+function capitalizeFirstLetter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1)
+}
+
+async function login(provider) {
+  await loginOidc(provider)
+}
+
+function getIcon(provider) {
+  return icons[provider]
+}
 
 async function loginPassword() {
   // loginFlowBody is an instance of UpdateLoginFlowWithPasswordMethod
@@ -93,62 +117,11 @@ async function loginPassword() {
   await loginGeneric(loginFlowBody)
 }
 
-async function loginGithub() {
-  // loginFlowBody is an instance of UpdateLoginFlowWithOidcMethod
+async function loginOidc(provider) {
   const loginFlowBody = {
     csrf_token: extractNestedCsrfToken(flowData.value), // set in generic function
     method: 'oidc',
-    provider: 'github',
-  }
-  await loginGeneric(loginFlowBody)
-}
-
-async function loginDiscord() {
-  // loginFlowBody is an instance of UpdateLoginFlowWithOidcMethod
-  const loginFlowBody = {
-    csrf_token: extractNestedCsrfToken(flowData.value), // set in generic function
-    method: 'oidc',
-    provider: 'discord',
-  }
-  await loginGeneric(loginFlowBody)
-}
-
-async function loginGoogle() {
-  // loginFlowBody is an instance of UpdateLoginFlowWithOidcMethod
-  const loginFlowBody = {
-    csrf_token: extractNestedCsrfToken(flowData.value), // set in generic function
-    method: 'oidc',
-    provider: 'google',
-  }
-  await loginGeneric(loginFlowBody)
-}
-
-async function loginApple() {
-  // loginFlowBody is an instance of UpdateLoginFlowWithOidcMethod
-  const loginFlowBody = {
-    csrf_token: extractNestedCsrfToken(flowData.value), // set in generic function
-    method: 'oidc',
-    provider: 'apple',
-  }
-  await loginGeneric(loginFlowBody)
-}
-
-async function loginGitlab() {
-  // loginFlowBody is an instance of UpdateLoginFlowWithOidcMethod
-  const loginFlowBody = {
-    csrf_token: extractNestedCsrfToken(flowData.value), // set in generic function
-    method: 'oidc',
-    provider: 'gitlab',
-  }
-  await loginGeneric(loginFlowBody)
-}
-
-async function loginMicrosoft() {
-  // loginFlowBody is an instance of UpdateLoginFlowWithOidcMethod
-  const loginFlowBody = {
-    csrf_token: extractNestedCsrfToken(flowData.value), // set in generic function
-    method: 'oidc',
-    provider: 'microsoft',
+    provider: provider,
   }
   await loginGeneric(loginFlowBody)
 }
@@ -170,7 +143,7 @@ async function loginGeneric(loginFlowBody) {
       // Using Social-integrated login/registration will return a 422: Unprocessable Entity error with a redirection link.
       // We use this to continue the flow.
       // (TODO: this is weird, is this a bug?)
-      if (e.response.status === 422) {
+      if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
         window.location.href = e.response.data.redirect_browser_to
         return
       }

@@ -143,7 +143,21 @@ selfservice:
       ui_url: http://127.0.0.1:4455/settings
       privileged_session_max_age: 15m
       required_aal: highest_available
-
+      after:
+        hooks:
+          - hook: web_hook
+            config:
+              method: POST
+              url: OVERWRITE_ME
+              body: file:///etc/config/kratos/id.jsonnet
+              response:
+                parse: true
+              auth:
+                type: api_key
+                config:
+                  name: Authorization
+                  value: OVERWRITE_ME
+                  in: header
     recovery:
       enabled: true
       ui_url: http://127.0.0.1:4455/recovery

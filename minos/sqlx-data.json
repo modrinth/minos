@@ -1,0 +1,74 @@
+{
+  "db": "PostgreSQL",
+  "5f48f69403868055df10ff132f2428cc520934f546bf69bdd1133caf120732bc": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n        DELETE FROM identity_credential_identifiers\n        WHERE identity_credential_id = $1 AND identity_credential_type_id = $2 AND identifier LIKE 'github%'\n        "
+  },
+  "bae87d79623b7a18ca484ffb33246f0de1cca656c616d76d4a8e3c21d759b1bc": {
+    "describe": {
+      "columns": [
+        {
+          "name": "config",
+          "ordinal": 0,
+          "type_info": "Jsonb"
+        },
+        {
+          "name": "id",
+          "ordinal": 1,
+          "type_info": "Uuid"
+        }
+      ],
+      "nullable": [
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n        SELECT config, ic.id\n        FROM identity_credentials ic \n        WHERE identity_id = $1 AND ic.identity_credential_type_id = $2\n        "
+  },
+  "bb42980eed59bf0375db905c711cd5582574780ec97b14713bb27491ce1c3411": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Jsonb",
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n        UPDATE identity_credentials\n        SET config = $1\n        FROM identity_credential_types ict\n        WHERE identity_id = $2 AND ict.name = 'oidc' AND identity_credential_type_id = ict.id\n        "
+  },
+  "ffa17d3325fee8b3358e1d9afc1e940c6a9b03068aaa09fbf1e25fbb0a3d5682": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "\n        SELECT id\n        FROM identity_credential_types\n        WHERE name = 'oidc'\n        "
+  }
+}

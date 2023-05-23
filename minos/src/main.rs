@@ -1,4 +1,5 @@
 mod auth;
+mod database;
 mod error;
 mod routes;
 mod util;
@@ -48,6 +49,11 @@ async fn main() -> std::io::Result<()> {
         std::env::set_var("RUST_BACKTRACE", "1");
     }
 
+    // Database Connector
+    let pool = database::connect()
+        .await
+        .expect("Database connection failed");
+
     // Start server
     info!("Starting Actix HTTP server!");
     HttpServer::new(move || {
@@ -65,6 +71,7 @@ async fn main() -> std::io::Result<()> {
                     .supports_credentials()
                     .max_age(3600),
             )
+            .app_data(web::Data::new(pool.clone()))
             .app_data(web::Data::new(configuration.clone()))
             .configure(routes::user_config)
             .configure(routes::admin_config)
@@ -98,6 +105,7 @@ fn check_env_vars() -> bool {
     failed |= check_var::<String>("ORY_AUTH_BEARER");
 
     failed |= check_var::<String>("LABRINTH_API_URL");
+    failed |= check_var::<String>("LABRINTH_ADMIN_KEY");
 
     failed
 }

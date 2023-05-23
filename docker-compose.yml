@@ -20,6 +20,8 @@ services:
     - COURIER_SMTP_CONNECTION_URI
     - SELFSERVICE_FLOWS_REGISTRATION_AFTER_PASSWORD_HOOKS_0_CONFIG_AUTH_CONFIG_VALUE
     - SELFSERVICE_FLOWS_REGISTRATION_AFTER_OIDC_HOOKS_0_CONFIG_AUTH_CONFIG_VALUE
+    - SELFSERVICE_FLOWS_SETTINGS_AFTER_HOOKS_0_CONFIG_URL
+    - SELFSERVICE_FLOWS_SETTINGS_AFTER_HOOKS_0_CONFIG_AUTH_CONFIG_VALUE
     - SELFSERVICE_METHODS_OIDC_CONFIG_PROVIDERS_0_CLIENT_ID
     - SELFSERVICE_METHODS_OIDC_CONFIG_PROVIDERS_0_CLIENT_SECRET
     - SELFSERVICE_METHODS_OIDC_CONFIG_PROVIDERS_1_CLIENT_ID
@@ -39,7 +41,7 @@ services:
     - LOG_LEVEL
     ports:
       - '4433:4433' # public
-      # - '4434:4434' # admin. can be uncommented for testing- but should be removed in prod.
+      - '4434:4434' # admin. can be uncommented for testing- but should be removed in prod.
     restart: unless-stopped
     command: serve -c /etc/config/kratos/${KRATOS_YML} --dev --watch-courier
     volumes:
