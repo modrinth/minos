@@ -3,13 +3,19 @@
 // }
 export function extractNestedErrorMessagesFromError(e) {
   let errs = []
-  if ('data' in e.response) {
-    if ('error' in e.response.data) {
-      // Non-UI (but still Ory-recognized) error returned, will have 'reason' field
-      errs.push({ id: 0, type: 'error', text: e.response.data.error.reason })
-    } else if ('ui' in e.response.data) {
-      return extractNestedErrorMessagesFromUiData(e.response.data)
-    }
+  errs.push({ id: 0, type: 'error', text: JSON.stringify(e) })
+
+  if (!('response' in e)) return errs
+  if (!('data' in e.response)) return errs
+  if ('error' in e.response.data) {
+    // Non-UI (but still Ory-recognized) error returned, will have 'reason' field
+    errs.push({ id: 0, type: 'error', text: e.response.data.error.reason })
+  } else if ('ui' in e.response.data) {
+    return extractNestedErrorMessagesFromUiData(e.response.data)
+  } else {
+    // Unknown error, just return it for debugging.
+    // Ideally, this should never happen.
+    errs.push({ id: 0, type: 'error', text: JSON.stringify(e.response.data) })
   }
   return errs
 }
