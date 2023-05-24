@@ -49,7 +49,7 @@ import {
   extractNestedCsrfToken,
   extractNestedErrorMessagesFromError,
   extractOidcProviders,
-  extractNestedErrorMessagesFromData,
+  extractNestedErrorMessagesFromUiData,
 } from '~/helpers/ory-ui-extract'
 
 const config = useRuntimeConfig()
@@ -71,7 +71,7 @@ $oryConfig
   .then((r) => {
     flowData.value = r.data
     providers.value = extractOidcProviders(r.data)
-    oryUiMsgs.value = extractNestedErrorMessagesFromData(r.data)
+    oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
   })
   // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
   // Any other error we just leave the page
