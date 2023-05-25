@@ -6,7 +6,7 @@
         {{ oryUiMsg.text }}
       </p>
     </div>
-    <template v-if="mode === 0">
+    <template v-if="flowData.state == 'choose_method'">
       <p>
         Enter your email below and we'll send a recovery link to allow you to recover your account.
       </p>
@@ -14,7 +14,7 @@
       <input v-model="email" id="email" type="text" placeholder="Email" />
       <button @click="recovery" class="btn btn-primary continue-btn">Send recovery email</button>
     </template>
-    <template v-else-if="mode === 1">
+    <template v-else-if="flowData.state == 'sent_email'">
       <p>
         A recovery email has been sent to <strong>{{ email }}</strong
         >.
@@ -23,7 +23,7 @@
       <input id="code" v-model="code" type="text" placeholder="Enter code" />
       <button @click="submitCode" class="btn btn-primary continue-btn">Recover</button>
     </template>
-    <template v-else-if="mode === 2">
+    <template v-else-if="flowData.state == 'passed_challenge'">
       <p>
         You are resetting the password for the Modrinth account associated with
         <strong>{{ email }}</strong
@@ -42,7 +42,7 @@
 import {
   extractNestedCsrfToken,
   extractNestedErrorMessagesFromError,
-  extractNestedErrorMessagesFromData,
+  extractNestedErrorMessagesFromUiData,
 } from '~/helpers/ory-ui-extract'
 const { $oryConfig } = useNuxtApp()
 const route = useRoute()
@@ -50,28 +50,29 @@ const route = useRoute()
 const oryUiMsgs = ref([])
 const email = ref('')
 const code = ref('')
-const mode = ref(0)
 
 // Attempt to get flow information on page load
 const flowData = ref(null)
-$oryConfig
-  .getRecoveryFlow({ id: route.query.flow })
-  .then((r) => {
-    console.log(r.data)
-    flowData.value = r.data
-    oryUiMsgs.value = extractNestedErrorMessagesFromData(r.data)
-  })
-  // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
-  // Any other error we just leave the page
-  .catch((e) => {
-    if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
-      window.location.href = e.response.data.redirect_browser_to
-    } else if (e.response.status === 404) {
-      navigateTo(config.oryUrl + '/self-service/recovery/browser', { external: true })
-    } else {
-      navigateTo('/')
-    }
-  })
+async function updateFlow() {
+  $oryConfig
+    .getRecoveryFlow({ id: route.query.flow })
+    .then((r) => {
+      flowData.value = r.data
+      oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
+    })
+    // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
+    // Any other error we just leave the page
+    .catch((e) => {
+      if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
+        window.location.href = e.response.data.redirect_browser_to
+      } else if (e.response.status === 404) {
+        navigateTo(config.oryUrl + '/self-service/recovery/browser', { external: true })
+      } else {
+        navigateTo('/')
+      }
+    })
+}
+updateFlow()
 
 // Send recovery email to the set 'email'
 async function recovery() {
@@ -87,7 +88,7 @@ async function recovery() {
     })
     .then((_r) => {
       oryUiMsgs.value = []
-      mode.value = 1
+      updateFlow()
     })
     .catch((e) => {
       if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
@@ -107,25 +108,14 @@ async function submitCode() {
       flow: route.query.flow,
       updateRecoveryFlowBody: {
         csrf_token: extractNestedCsrfToken(flowData.value), // must be directly set
-        // email: email.value, // MUST be an email identifier, not just a usernmae
         method: 'code',
         code: code.value,
       },
     })
     .then((_r) => {
-      oryUiMsgs.value = []
-      // If return_to exists, return to it, otherwise return to main page
-      const returnUrl = flowData.value.return_to || nuxtUrl
-      window.location.href = returnUrl
+      updateFlow()
     })
     .catch((e) => {
-      // May return a 422: Unprocessable Entity error with a redirection link.
-      // We use this to continue the flow.
-      // (TODO: this is weird, is this a bug?)
-      if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
-        window.location.href = e.response.data.redirect_browser_to
-        return
-      }
       // Get displayable error messsages from nested returned Ory UI elements
       oryUiMsgs.value = extractNestedErrorMessagesFromError(e)
     })

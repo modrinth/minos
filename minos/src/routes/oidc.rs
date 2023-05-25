@@ -31,10 +31,10 @@ pub struct OidcDataProvider {
     initial_access_token: String,
     initial_refresh_token: String,
 }
-// POST /admin/oidc-callback
+// POST /admin/settings-callback
 // Updates the OIDC data for an identity with the latest data from the OIDC provider
 // Used as a callback after the settings flow- designed to directly interface with Ory Kratos
-#[actix_web::post("oidc-callback")]
+#[actix_web::post("settings-callback")]
 pub async fn oidc_reload(
     payload: web::Json<Payload>,
     pool: web::Data<pool::Pool<sqlx::Postgres>>,
@@ -49,17 +49,19 @@ pub async fn oidc_reload(
     .await
     .map_err(OryError::from)?;
     let err = || OryError::MissingIdentityData("OIDC".to_string());
-    let oidc_data: OidcDataConfig = serde_json::from_value(
-        identity_with_credentials
-            .credentials
-            .clone()
-            .ok_or_else(err)?
-            .get("oidc")
-            .ok_or_else(err)?
-            .config
-            .clone()
-            .ok_or_else(err)?,
-    )?;
+    let credentials = identity_with_credentials
+        .credentials
+        .clone()
+        .ok_or_else(err)?;
+
+    // If there is no OIDC data, that's fine. Just return
+    let oidc_data = match credentials.get("oidc") {
+        Some(o) => o,
+        None => return Ok(HttpResponse::Ok().json(identity_with_credentials)),
+    };
+
+    let oidc_data: OidcDataConfig =
+        serde_json::from_value(oidc_data.config.clone().ok_or_else(err)?)?;
     let providers = oidc_data.providers;
     let get_new_provider_id = |p: String| {
         providers
@@ -67,7 +69,6 @@ pub async fn oidc_reload(
             .find(|x| x.provider == p)
             .map(|x| x.subject.clone())
     };
-
     // Overwite into current metadata_public
     let metadata_public: MinosSessionMetadataPublic = serde_json::from_value(
         identity_with_credentials
@@ -87,7 +88,6 @@ pub async fn oidc_reload(
         // Directly remove the github OIDC just added from the db directly
         // Must use direct replacement as patching is not supported for credentials
         remove_github_credentials(&identity_with_credentials.id, &pool).await?;
-
         return Ok(HttpResponse::BadRequest().json(OryWebhookPayload {
             messages: vec![
                 OryWebhookMessagePacket {

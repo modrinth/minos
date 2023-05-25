@@ -50,7 +50,7 @@
 import {
   extractNestedCsrfToken,
   extractNestedErrorMessagesFromError,
-  extractNestedErrorMessagesFromData,
+  extractNestedErrorMessagesFromUiData,
   extractOidcLinkProviders,
   extractOidcUnlinkProviders,
 } from '~/helpers/ory-ui-extract'
@@ -77,23 +77,19 @@ async function updateFlow() {
   $oryConfig
     .getSettingsFlow({ id: route.query.flow || '' })
     .then((r) => {
-      console.log('testy temp')
       flowData.value = r.data
       linkProviders.value = extractOidcLinkProviders(r.data)
       unlinkProviders.value = extractOidcUnlinkProviders(r.data)
-      oryUiMsgs.value = extractNestedErrorMessagesFromData(r.data)
+      oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
     })
     // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
     // Any other error we just leave the page
     .catch((e) => {
-      console.log('go')
-      console.log(e)
       if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
         window.location.href = e.response.data.redirect_browser_to
       } else if ('response' in e && e.response.status === 404) {
         navigateTo(config.oryUrl + '/self-service/settings/browser', { external: true })
       } else {
-        console.log(e)
         navigateTo('/')
       }
     })
@@ -138,7 +134,6 @@ async function linkOidc(provider, link_or_unlink) {
   } else {
     update.updateSettingsFlowBody.unlink = provider
   }
-  console.log(update)
 
   $oryConfig
     .updateSettingsFlow(update)
@@ -152,8 +147,6 @@ async function linkOidc(provider, link_or_unlink) {
       }
     })
     .catch((e) => {
-      console.log('hi')
-      console.log(e)
       // Using Social-integrated login/registration will return a 422: Unprocessable Entity error with a redirection link.
       // We use this to continue the flow.
       // (TODO: this is weird, is this a bug?)

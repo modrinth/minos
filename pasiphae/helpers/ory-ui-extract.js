@@ -1,6 +1,24 @@
 // Extracts error messages from ORY UI nodes
 // (Original ORY setup provides UI 'nodes' they want used)
-// Input 'e' is the raw error, and returned 'errs' is an concatenated array of each 'messages' in:
+// }
+export function extractNestedErrorMessagesFromError(e) {
+  let errs = []
+  errs.push({ id: 0, type: 'error', text: JSON.stringify(e) })
+
+  if (!('response' in e)) return errs
+  if (!('data' in e.response)) return errs
+  if ('error' in e.response.data) {
+    // Non-UI (but still Ory-recognized) error returned, will have 'reason' field
+    errs.push({ id: 0, type: 'error', text: e.response.data.error.reason })
+  } else if ('ui' in e.response.data) {
+    return extractNestedErrorMessagesFromUiData(e.response.data)
+  } else {
+    // Unknown error, just return it for debugging.
+    // Ideally, this should never happen.
+    errs.push({ id: 0, type: 'error', text: JSON.stringify(e.response.data) })
+  }
+  return errs
+}
 // e {
 //      response: {
 //          data : {
@@ -15,15 +33,8 @@
 //      }
 //  ...
 // }
-export function extractNestedErrorMessagesFromError(e) {
-  if ('data' in e.response) {
-    return extractNestedErrorMessagesFromData(e.response.data)
-  }
-  return []
-}
-export function extractNestedErrorMessagesFromData(data) {
+export function extractNestedErrorMessagesFromUiData(data) {
   let errs = []
-  console.log(data)
   if ('messages' in data.ui) {
     errs = errs.concat(data.ui.messages)
   } else if ('nodes' in data.ui) {
@@ -70,8 +81,6 @@ export function extractOidcProviders(data) {
   let providers = []
   const returnedNodes = data.ui.nodes
   for (let i = 0; i < returnedNodes.length; i++) {
-    console.log(JSON.stringify(returnedNodes[i]))
-
     if (returnedNodes[i].group === 'oidc' && returnedNodes[i].attributes.name === 'provider') {
       providers.push(returnedNodes[i].attributes.value)
     }

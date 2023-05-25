@@ -1,7 +1,7 @@
 version: v0.13.0
 
 dsn: memory
-dev: false
+dev: true
 
 serve:
   public:
