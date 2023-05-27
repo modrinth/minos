@@ -17,6 +17,10 @@
   height: 1.25rem;
 }
 
+.totp {
+  justify-content: center;
+}
+
 .discord-btn {
   color: #ffffff;
   background-color: #5865f2;

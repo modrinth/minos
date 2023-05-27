@@ -19,7 +19,7 @@
           v-for="provider in linkProviders"
           :key="provider"
           :class="`${provider}-btn`"
-          @click="link(provider)"
+          @click="linkOidc(provider,'link')"
         >
           <component :is="getIcon(provider)" /> <span>{{ capitalizeFirstLetter(provider) }}</span>
         </Button>
@@ -37,11 +37,30 @@
           v-for="provider in unlinkProviders"
           :key="provider"
           :class="`${provider}-btn`"
-          @click="unlink(provider)"
+          @click="linkOidc(provider,'unlink')"
         >
           <component :is="getIcon(provider)" /> <span>{{ capitalizeFirstLetter(provider) }}</span>
         </Button>
       </div>
+    </div>
+    <div class="text-divider">
+    </div>
+    <div class="totp" v-if="totpQRImage">
+    <h1>Connect a secondary authentication provider</h1>
+        <img v-bind:src="totpQRImage" :width="totpQRWidth" :height="totpQRHeight" alt="QR Image">
+        <p>Currently, there is no authenticator app linked to your account.</p>
+        <p>To add one, scan the QR code with your authenticator app, or enter the following secret manually.</p>
+    {{ totpSecret }}
+    <p>Confirm your provider by entering the provider's code below:</p>
+    <input v-model="totp_code" placeholder="TOTP Code" type="text" />
+    <button @click="linkAuthenticator('link')" class="btn btn-primary continue-btn">Link authenticator app</button>
+  </div>
+  <div v-else>
+    <button @click="linkAuthenticator('unlink')" class="btn btn-primary continue-btn">Unlink authenticator app</button>
+  </div>
+  <div class="text-divider"></div>
+  <div class="totp">
+       <button @click="generateCodes" class="btn btn-primary continue-btn">:Generate backup codes</button>
     </div>
   </template>
 </template>
@@ -51,6 +70,7 @@ import {
   extractNestedCsrfToken,
   extractNestedErrorMessagesFromError,
   extractNestedErrorMessagesFromUiData,
+  extractNestedTotpData,
   extractOidcLinkProviders,
   extractOidcUnlinkProviders,
 } from '~/helpers/ory-ui-extract'
@@ -67,11 +87,19 @@ const { $oryConfig } = useNuxtApp()
 const oryUiMsgs = ref([])
 const password = ref('')
 const confirmPassword = ref('')
+const totp_code = ref('')
 
 // Attempt to get flow information on page load
 const flowData = ref(null)
 const linkProviders = ref([])
 const unlinkProviders = ref([])
+
+const totpQRImage = ref(null)
+const totpQRWidth = ref(null)
+const totpQRHeight = ref(null)
+const totpSecret = ref(null)
+
+
 
 async function updateFlow() {
   $oryConfig
@@ -81,6 +109,16 @@ async function updateFlow() {
       linkProviders.value = extractOidcLinkProviders(r.data)
       unlinkProviders.value = extractOidcUnlinkProviders(r.data)
       oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
+      console.log(JSON.stringify(r.data))
+
+      let totp = extractNestedTotpData(r.data)
+      if (totp.image && totp.secret) {
+        totpQRImage.value = totp.image.src
+        totpQRWidth.value = totp.image.width
+        totpQRHeight.value = totp. image.height
+        totpSecret.value = totp.secret
+      }
+        
     })
     // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
     // Any other error we just leave the page
@@ -109,34 +147,71 @@ function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1)
 }
 
-async function link(provider) {
-  await linkOidc(provider, 'link')
-}
-async function unlink(provider) {
-  await linkOidc(provider, 'unlink')
-}
-
 function getIcon(provider) {
   return icons[provider]
 }
 
+
 async function linkOidc(provider, link_or_unlink) {
-  let update = {
-    flow: route.query.flow,
-    updateSettingsFlowBody: {
-      csrf_token: extractNestedCsrfToken(flowData.value),
+  let updateSettingsFlowBody = {
       method: 'profile',
       traits: flowData.value.identity.traits,
-    },
-  }
+  };
+
   if (link_or_unlink == 'link') {
-    update.updateSettingsFlowBody.link = provider
+    updateSettingsFlowBody.link = provider
   } else {
-    update.updateSettingsFlowBody.unlink = provider
+    updateSettingsFlowBody.unlink = provider
   }
 
-  $oryConfig
-    .updateSettingsFlow(update)
+  await sendUpdate(updateSettingsFlowBody)
+
+}
+
+// Attempt to link to an authentication app (or unlink if already connected)
+// Should only be able to link to one (if unlink button is displayed, link should not be)
+async function linkAuthenticator(link_or_unlink) {
+  let updateSettingsFlowBody = {
+      method: 'totp',
+      totp_code: totp_code.value, 
+      totp_unlink: link_or_unlink == 'unlink',
+    };
+  await sendUpdate(updateSettingsFlowBody)
+}
+
+async function generateCodes() {
+  // stub, TODO
+}
+
+
+// Uses settings flow to attempt to update a logged-in user's password
+async function updatePassword() {
+  if (password.value !== confirmPassword.value) {
+    oryUiMsgs.value = [{ text: 'Passwords do not match!' }]
+    return
+  }
+
+  let updateSettingsFlowBody = {
+        csrf_token: extractNestedCsrfToken(flowData.value), // must be directly set
+        method: 'password',
+        password: password.value,
+      }
+  await sendUpdate(updateSettingsFlowBody)
+}
+
+  // updateSettingsFlow can match one of:
+  // UpdateSettingsFlowWithLookupMethod | UpdateSettingsFlowWithOidcMethod | UpdateSettingsFlowWithPasswordMethod | UpdateSettingsFlowWithProfileMethod
+  // For different ways to things to change - some lookup value, or password.
+  // For example, we use UpdateSettingsFlowWithPasswordMethod to update password
+async function sendUpdate(updateSettingsFlowBody) {
+  let csrf_token = extractNestedCsrfToken(flowData.value); // must be directly set
+  updateSettingsFlowBody.csrf_token = csrf_token;
+
+  await $oryConfig
+    .updateSettingsFlow({
+      flow: route.query.flow,
+      updateSettingsFlowBody: updateSettingsFlowBody,
+    })
     .then((_r) => {
       // If return_to exists, return to it, otherwise refresh data
       const returnUrl = flowData.value.return_to
@@ -147,42 +222,6 @@ async function linkOidc(provider, link_or_unlink) {
       }
     })
     .catch((e) => {
-      // Using Social-integrated login/registration will return a 422: Unprocessable Entity error with a redirection link.
-      // We use this to continue the flow.
-      // (TODO: this is weird, is this a bug?)
-      if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
-        window.location.href = e.response.data.redirect_browser_to
-        return
-      }
-      // Get displayable error messsages from nested returned Ory UI elements
-      oryUiMsgs.value = extractNestedErrorMessagesFromError(e)
-    })
-}
-
-// Uses settings flow to update a logged-in user's password
-async function updatePassword() {
-  if (password.value !== confirmPassword.value) {
-    oryUiMsgs.value = [{ text: 'Passwords do not match!' }]
-    return
-  }
-
-  // updateSettingsFlow can match one of:
-  // UpdateSettingsFlowWithLookupMethod | UpdateSettingsFlowWithOidcMethod | UpdateSettingsFlowWithPasswordMethod | UpdateSettingsFlowWithProfileMethod
-  // For different ways to things to change - some lookup value, or password.
-  // In this case, we use UpdateSettingsFlowWithPasswordMethod to update password
-  await $oryConfig
-    .updateSettingsFlow({
-      flow: route.query.flow,
-      updateSettingsFlowBody: {
-        csrf_token: extractNestedCsrfToken(flowData.value), // must be directly set
-        method: 'password',
-        password: password.value,
-      },
-    })
-    .then((_r) => {
-      oryUiMsgs.value = [{ text: 'Successful pass change.' }]
-    })
-    .catch((e) => {
       if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
         window.location.href = e.response.data.redirect_browser_to
       } else {
@@ -190,6 +229,8 @@ async function updatePassword() {
         oryUiMsgs.value = extractNestedErrorMessagesFromError(e)
       }
     })
+
 }
+
 </script>
 <style src="~/assets/login.css"></style>

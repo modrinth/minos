@@ -41,7 +41,7 @@ services:
     - LOG_LEVEL
     ports:
       - '4433:4433' # public
-      - '4434:4434' # admin. can be uncommented for testing- but should be removed in prod.
+    #  - '4434:4434' # admin. can be uncommented for testing- but should be removed in prod.
     restart: unless-stopped
     command: serve -c /etc/config/kratos/${KRATOS_YML} --dev --watch-courier
     volumes:
@@ -65,3 +65,12 @@ services:
       - .env
     ports:
       - "4455:4455"
+  # kratos-selfservice-ui-node:
+  #   image: oryd/kratos-selfservice-ui-node:v0.13.0
+  #   ports:
+  #   - "4455:4455"
+  #   environment:
+  #     - PORT=4455
+  #     - SECURITY_MODE=
+  #     - KRATOS_PUBLIC_URL=http://kratos:4433
+  #     - KRATOS_BROWSER_URL=http://127.0.0.1:4433

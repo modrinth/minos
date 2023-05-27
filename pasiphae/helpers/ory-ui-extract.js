@@ -109,3 +109,36 @@ export function extractOidcUnlinkProviders(data) {
   }
   return providers.sort((a, b) => preferred_order.indexOf(a) - preferred_order.indexOf(b))
 }
+
+
+// Returns nested TOTP image and secret
+// Return object:
+// {
+//    image: {
+//        src: <base64 encoded image>
+//        width: <width>
+//        height: <height>
+//    }
+//    secret: <secret>
+// }
+export function extractNestedTotpData(data){
+  const returnedNodes = data.ui.nodes
+  let image = null;
+  let secret = null;
+  for (let i = 0; i < returnedNodes.length; i++) {
+    if (returnedNodes[i].group === 'totp') {
+      if (returnedNodes[i].attributes.id === 'totp_qr') {
+        
+          image = {
+            src: returnedNodes[i].attributes.src,
+            width: returnedNodes[i].attributes.width,
+            height: returnedNodes[i].attributes.height
+          }
+      }
+      if (returnedNodes[i].attributes.id === 'totp_secret_key') {
+        secret = returnedNodes[i].attributes.text.text
+      }
+    }
+  }
+  return {image: image, secret: secret}
+}
