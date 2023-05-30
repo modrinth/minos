@@ -1,15 +1,17 @@
 <template>
   <template v-if="flowData">
-    <h1>Edit your password</h1>
     <div v-if="oryUiMsgs.length > 0" class="errors">
       <p v-for="oryUiMsg in oryUiMsgs" :key="oryUiMsg">
         {{ oryUiMsg.text }}
       </p>
     </div>
+    <h1>Edit your password</h1>
     <input v-model="password" placeholder="Password" type="password" />
     <input v-model="confirmPassword" placeholder="Confirm Password" type="password" />
     <button @click="updatePassword" class="btn btn-primary continue-btn">Reset password</button>
     <div class="text-divider">
+      <div></div>
+      <span>or</span>
       <div></div>
     </div>
     <div v-if="linkProviders.length > 0">
@@ -19,7 +21,7 @@
           v-for="provider in linkProviders"
           :key="provider"
           :class="`${provider}-btn`"
-          @click="linkOidc(provider,'link')"
+          @click="linkOidc(provider, 'link')"
         >
           <component :is="getIcon(provider)" /> <span>{{ capitalizeFirstLetter(provider) }}</span>
         </Button>
@@ -28,40 +30,101 @@
     <div v-if="unlinkProviders.length > 0">
       <div class="text-divider">
         <div></div>
+        <span>or</span>
+        <div></div>
       </div>
     </div>
     <div v-if="unlinkProviders.length > 0">
       <h1>Unlink a social account</h1>
-      <div class="third-party-unlink">
+      <div class="third-party-link">
         <Button
           v-for="provider in unlinkProviders"
           :key="provider"
           :class="`${provider}-btn`"
-          @click="linkOidc(provider,'unlink')"
+          @click="linkOidc(provider, 'unlink')"
         >
           <component :is="getIcon(provider)" /> <span>{{ capitalizeFirstLetter(provider) }}</span>
         </Button>
       </div>
     </div>
     <div class="text-divider">
+      <div></div>
+      <span>or</span>
+      <div></div>
     </div>
-    <div class="totp" v-if="totpQRImage">
-    <h1>Connect a secondary authentication provider</h1>
-        <img v-bind:src="totpQRImage" :width="totpQRWidth" :height="totpQRHeight" alt="QR Image">
-        <p>Currently, there is no authenticator app linked to your account.</p>
-        <p>To add one, scan the QR code with your authenticator app, or enter the following secret manually.</p>
-    {{ totpSecret }}
-    <p>Confirm your provider by entering the provider's code below:</p>
-    <input v-model="totp_code" placeholder="TOTP Code" type="text" />
-    <button @click="linkAuthenticator('link')" class="btn btn-primary continue-btn">Link authenticator app</button>
-  </div>
-  <div v-else>
-    <button @click="linkAuthenticator('unlink')" class="btn btn-primary continue-btn">Unlink authenticator app</button>
-  </div>
-  <div class="text-divider"></div>
-  <div class="totp">
-       <button @click="generateCodes" class="btn btn-primary continue-btn">:Generate backup codes</button>
+    <template v-if="totpQRImage">
+      <h1>Connect a secondary authentication provider</h1>
+      <img v-bind:src="totpQRImage" :width="totpQRWidth" :height="totpQRHeight" alt="QR Image" />
+      <p>Currently, there is no authenticator app linked to your account.</p>
+      <p>
+        To add one, scan the QR code with your authenticator app, or enter the following secret
+        manually.
+      </p>
+      <div>{{ totpSecret }}</div>
+      <br />
+      <p>Confirm your provider by entering the provider's code below:</p>
+      <input v-model="totpCode" placeholder="TOTP Code" type="text" />
+      <button @click="linkAuthenticator('link')" class="btn btn-primary continue-btn">
+        Link authenticator app
+      </button>
+    </template>
+    <template v-else>
+      <p>Unlink your authenticator app and remove 2FA from your account.</p>
+      <template v-if="lookupEnabled">
+        <p>Backup codes are enabled.</p>
+        <p>
+          If you unlink, you should also disable your backup codes, or your account will still
+          require 2FA.
+        </p>
+      </template>
+      <button @click="linkAuthenticator('unlink')" class="btn btn-primary continue-btn">
+        Unlink authenticator app
+      </button>
+    </template>
+    <div class="text-divider">
+      <div></div>
+      <span>or</span>
+      <div></div>
     </div>
+
+    <template v-if="lookupCodes.length > 0">
+      <div class="totp-codes">
+        <p v-for="code in lookupCodes" :key="code">
+          {{ code }}
+        </p>
+      </div>
+      <br />
+
+      <p>
+        Press 'confirm' to confirm and save these codes (overwriting the last ones). These will not
+        be shown again, so store them in a safe place!
+      </p>
+
+      <button @click="generateCodes(true)" class="btn btn-primary continue-btn">
+        Confirm backup codes
+      </button>
+    </template>
+
+    <template v-if="showLookupRegenerate || showLookupDisable">
+      <button @click="generateCodes(false)" class="btn btn-primary continue-btn">
+        Regenerate backup codes
+      </button>
+    </template>
+    <template v-if="totpQRImage && showLookupDisable">
+      <p>
+        <b>We recommend you disable your backup codes, or you add an authenticator app. </b>
+      </p>
+      <p>
+        Currently, the lookup secrets are your only form of 2FA, which may result in you getting
+        locked out of your account.
+      </p>
+    </template>
+
+    <template v-if="showLookupDisable">
+      <button @click="disableLookupSecrets()" class="btn btn-primary continue-btn">
+        Disable backup codes
+      </button>
+    </template>
   </template>
 </template>
 
@@ -70,6 +133,7 @@ import {
   extractNestedCsrfToken,
   extractNestedErrorMessagesFromError,
   extractNestedErrorMessagesFromUiData,
+  extractNestedLookupCodes,
   extractNestedTotpData,
   extractOidcLinkProviders,
   extractOidcUnlinkProviders,
@@ -87,7 +151,7 @@ const { $oryConfig } = useNuxtApp()
 const oryUiMsgs = ref([])
 const password = ref('')
 const confirmPassword = ref('')
-const totp_code = ref('')
+const totpCode = ref('')
 
 // Attempt to get flow information on page load
 const flowData = ref(null)
@@ -99,7 +163,9 @@ const totpQRWidth = ref(null)
 const totpQRHeight = ref(null)
 const totpSecret = ref(null)
 
-
+const lookupCodes = ref([])
+const showLookupRegenerate = ref(false)
+const showLookupDisable = ref(false)
 
 async function updateFlow() {
   $oryConfig
@@ -115,14 +181,27 @@ async function updateFlow() {
       if (totp.image && totp.secret) {
         totpQRImage.value = totp.image.src
         totpQRWidth.value = totp.image.width
-        totpQRHeight.value = totp. image.height
+        totpQRHeight.value = totp.image.height
         totpSecret.value = totp.secret
+      } else {
+        totpQRImage.value = null
+        totpQRWidth.value = null
+        totpQRHeight.value = null
+        totpSecret.value = null
       }
-        
+
+      let look = extractNestedLookupCodes(r.data)
+      if (look) {
+        lookupCodes.value = look.codes
+        showLookupRegenerate.value = look.regenerateButton
+        showLookupDisable.value = look.disableButton
+      }
     })
     // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
     // Any other error we just leave the page
     .catch((e) => {
+      console.log(e)
+      console.log(JSON.stringify(e))
       if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
         window.location.href = e.response.data.redirect_browser_to
       } else if ('response' in e && e.response.status === 404) {
@@ -151,38 +230,59 @@ function getIcon(provider) {
   return icons[provider]
 }
 
-
 async function linkOidc(provider, link_or_unlink) {
   let updateSettingsFlowBody = {
-      method: 'profile',
-      traits: flowData.value.identity.traits,
-  };
+    method: 'profile',
+    traits: flowData.value.identity.traits,
+  }
 
   if (link_or_unlink == 'link') {
     updateSettingsFlowBody.link = provider
+    await sendUpdate(updateSettingsFlowBody)
   } else {
     updateSettingsFlowBody.unlink = provider
+    await sendUpdate(updateSettingsFlowBody)
   }
-
-  await sendUpdate(updateSettingsFlowBody)
-
 }
 
 // Attempt to link to an authentication app (or unlink if already connected)
 // Should only be able to link to one (if unlink button is displayed, link should not be)
 async function linkAuthenticator(link_or_unlink) {
   let updateSettingsFlowBody = {
-      method: 'totp',
-      totp_code: totp_code.value, 
-      totp_unlink: link_or_unlink == 'unlink',
-    };
+    method: 'totp',
+    totp_code: totpCode.value,
+    totp_unlink: link_or_unlink == 'unlink',
+  }
   await sendUpdate(updateSettingsFlowBody)
 }
 
-async function generateCodes() {
-  // stub, TODO
+// Regenerates (or generates) backup codes
+// Previous codes are invalidated
+async function generateCodes(confirm) {
+  let regenerate = !confirm
+  let updateSettingsFlowBody = {
+    method: 'lookup',
+    lookup_secret_regenerate: regenerate,
+    lookup_secret_confirm: confirm,
+  }
+
+  if (confirm) {
+    updateSettingsFlowBody.lookup_secret_disable = false
+  }
+  await sendUpdate(updateSettingsFlowBody)
 }
 
+// Enables or disables backup codes
+// If enabling, generates a set of codes
+async function disableLookupSecrets() {
+  let updateSettingsFlowBody = {
+    method: 'lookup',
+    lookup_secret_disable: true,
+    lookup_secret_regenerate: false,
+  }
+  console.log(JSON.stringify(updateSettingsFlowBody))
+  await sendUpdate(updateSettingsFlowBody)
+}
 
 // Uses settings flow to attempt to update a logged-in user's password
 async function updatePassword() {
@@ -192,20 +292,20 @@ async function updatePassword() {
   }
 
   let updateSettingsFlowBody = {
-        csrf_token: extractNestedCsrfToken(flowData.value), // must be directly set
-        method: 'password',
-        password: password.value,
-      }
+    csrf_token: extractNestedCsrfToken(flowData.value), // must be directly set
+    method: 'password',
+    password: password.value,
+  }
   await sendUpdate(updateSettingsFlowBody)
 }
 
-  // updateSettingsFlow can match one of:
-  // UpdateSettingsFlowWithLookupMethod | UpdateSettingsFlowWithOidcMethod | UpdateSettingsFlowWithPasswordMethod | UpdateSettingsFlowWithProfileMethod
-  // For different ways to things to change - some lookup value, or password.
-  // For example, we use UpdateSettingsFlowWithPasswordMethod to update password
+// updateSettingsFlow can `match one of:
+// UpdateSettingsFlowWithLookupMethod | UpdateSettingsFlowWithOidcMethod | UpdateSettingsFlowWithPasswordMethod | UpdateSettingsFlowWithProfileMethod
+// For different ways to things to change - some lookup value, or password.
+// For example, we use UpdateSettingsFlowWithPasswordMethod to update password
 async function sendUpdate(updateSettingsFlowBody) {
-  let csrf_token = extractNestedCsrfToken(flowData.value); // must be directly set
-  updateSettingsFlowBody.csrf_token = csrf_token;
+  let csrf_token = extractNestedCsrfToken(flowData.value) // must be directly set
+  updateSettingsFlowBody.csrf_token = csrf_token
 
   await $oryConfig
     .updateSettingsFlow({
@@ -229,8 +329,6 @@ async function sendUpdate(updateSettingsFlowBody) {
         oryUiMsgs.value = extractNestedErrorMessagesFromError(e)
       }
     })
-
 }
-
 </script>
-<style src="~/assets/login.css"></style>
+<style src="~/assets/settings.css"></style>

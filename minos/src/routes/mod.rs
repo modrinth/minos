@@ -6,9 +6,9 @@ use actix_web::web;
 use actix_web_httpauth::middleware::HttpAuthentication;
 use thiserror::Error;
 
+pub mod callback;
 pub mod delete;
 pub mod not_found;
-pub mod oidc;
 pub mod user;
 
 pub use not_found::not_found;
@@ -31,7 +31,7 @@ pub fn admin_config(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("admin")
             .service(user::user_get_id)
-            .service(oidc::oidc_reload)
+            .service(callback::settings_callback)
             .service(delete::delete_all)
             .wrap(HttpAuthentication::bearer(
                 crate::auth::middleware::admin_validator,
@@ -113,6 +113,11 @@ pub enum OryError {
     #[error("Update Identity error: {0}")]
     UpdateIdentityError(
         #[from] ory_client::apis::Error<ory_client::apis::identity_api::UpdateIdentityError>,
+    ),
+    #[error("Delete Identity Credentials error: {0}")]
+    DeleteIdentityCredentialsError(
+        #[from]
+        ory_client::apis::Error<ory_client::apis::identity_api::DeleteIdentityCredentialsError>,
     ),
     #[error("List Identity error: {0}")]
     ListIdentitiesError(

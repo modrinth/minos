@@ -233,6 +233,10 @@ hashers:
   bcrypt:
     cost: 8
 
+session:
+  whoami:
+    required_aal: highest_available
+
 identity:
   default_schema_id: default
   schemas:

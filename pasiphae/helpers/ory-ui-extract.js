@@ -110,7 +110,6 @@ export function extractOidcUnlinkProviders(data) {
   return providers.sort((a, b) => preferred_order.indexOf(a) - preferred_order.indexOf(b))
 }
 
-
 // Returns nested TOTP image and secret
 // Return object:
 // {
@@ -121,24 +120,54 @@ export function extractOidcUnlinkProviders(data) {
 //    }
 //    secret: <secret>
 // }
-export function extractNestedTotpData(data){
+export function extractNestedTotpData(data) {
   const returnedNodes = data.ui.nodes
-  let image = null;
-  let secret = null;
+  let image = null
+  let secret = null
   for (let i = 0; i < returnedNodes.length; i++) {
     if (returnedNodes[i].group === 'totp') {
       if (returnedNodes[i].attributes.id === 'totp_qr') {
-        
-          image = {
-            src: returnedNodes[i].attributes.src,
-            width: returnedNodes[i].attributes.width,
-            height: returnedNodes[i].attributes.height
-          }
+        image = {
+          src: returnedNodes[i].attributes.src,
+          width: returnedNodes[i].attributes.width,
+          height: returnedNodes[i].attributes.height,
+        }
       }
       if (returnedNodes[i].attributes.id === 'totp_secret_key') {
         secret = returnedNodes[i].attributes.text.text
       }
     }
   }
-  return {image: image, secret: secret}
+  return { image: image, secret: secret }
+}
+
+// Returns nested lookup codes if they happen to be there
+// {
+//  enabled: <true/false> (whether lookup codes are currently enabled)
+//  codes: [ <code>, <code>, ... ]
+// }
+export function extractNestedLookupCodes(data) {
+  const returnedNodes = data.ui.nodes
+  let codes = []
+  let regenerateButton = false
+  let disableButton = false
+
+  for (let i = 0; i < returnedNodes.length; i++) {
+    if (returnedNodes[i].group === 'lookup_secret') {
+      if (returnedNodes[i].attributes.id === 'lookup_secret_codes') {
+        //atributes.text.text returns comma separated list of codes, but we want them as an array
+        // as we may want to format them differently
+        for (const s of returnedNodes[i].attributes.text.context.secrets) {
+          codes.push(s.text)
+        }
+      }
+      if (returnedNodes[i].attributes.name === 'lookup_secret_regenerate') {
+        regenerateButton = true
+      }
+      if (returnedNodes[i].attributes.name === 'lookup_secret_disable') {
+        disableButton = true
+      }
+    }
+  }
+  return { codes: codes, regenerateButton: regenerateButton, disableButton: disableButton }
 }

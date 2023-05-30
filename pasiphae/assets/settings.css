@@ -1,28 +1,30 @@
-.third-party {
+.third-party-link {
+  justify-content: center;
   display: grid;
   gap: var(--gap-md);
   grid-template-columns: repeat(2, 1fr);
   width: 100%;
 }
 
-.third-party .btn {
+.third-party-link .btn {
   width: 100%;
   justify-content: center;
   vertical-align: middle;
 }
 
-.third-party .btn svg {
+.third-party-link .btn svg {
   margin-right: var(--gap-sm);
   width: 1.25rem;
   height: 1.25rem;
 }
 
 .totp {
-  justify-content: center;
+  vertical-align: middle;
 }
 
 .totp-codes {
-  justify-content: center;
+  vertical-align: middle;
+
   display: grid;
   gap: var(--gap-md);
   grid-template-columns: repeat(2, 1fr);

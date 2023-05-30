@@ -1,7 +1,7 @@
-use actix_web::{web, HttpResponse};
+use actix_web::HttpResponse;
 use ory_client::{
     apis::configuration::Configuration,
-    models::{json_patch::OpEnum, JsonPatch},
+    models::{json_patch::OpEnum, Identity, JsonPatch},
 };
 use serde::{Deserialize, Serialize};
 
@@ -31,23 +31,15 @@ pub struct OidcDataProvider {
     initial_access_token: String,
     initial_refresh_token: String,
 }
-// POST /admin/settings-callback
+
 // Updates the OIDC data for an identity with the latest data from the OIDC provider
 // Used as a callback after the settings flow- designed to directly interface with Ory Kratos
-#[actix_web::post("settings-callback")]
 pub async fn oidc_reload(
-    payload: web::Json<Payload>,
-    pool: web::Data<pool::Pool<sqlx::Postgres>>,
-    configuration: web::Data<Configuration>,
+    identity_with_credentials: &Identity,
+    pool: &pool::Pool<sqlx::Postgres>,
+    configuration: &Configuration,
 ) -> Result<actix_web::HttpResponse, ApiError> {
     // Get the oidc data from database
-    let identity_with_credentials = ory_client::apis::identity_api::get_identity(
-        &configuration,
-        &payload.identity_id,
-        Some(vec!["oidc".to_string()]),
-    )
-    .await
-    .map_err(OryError::from)?;
     let err = || OryError::MissingIdentityData("OIDC".to_string());
     let credentials = identity_with_credentials
         .credentials
@@ -87,7 +79,7 @@ pub async fn oidc_reload(
     {
         // Directly remove the github OIDC just added from the db directly
         // Must use direct replacement as patching is not supported for credentials
-        remove_github_credentials(&identity_with_credentials.id, &pool).await?;
+        remove_github_credentials(&identity_with_credentials.id, pool).await?;
         return Ok(HttpResponse::BadRequest().json(OryWebhookPayload {
             messages: vec![
                 OryWebhookMessagePacket {
@@ -126,8 +118,8 @@ pub async fn oidc_reload(
         value: Some(serde_json::to_value(metadata_public)?),
     };
     ory_client::apis::identity_api::patch_identity(
-        &configuration,
-        &payload.identity_id,
+        configuration,
+        &identity_with_credentials.id,
         Some(vec![json_patch]),
     )
     .await
@@ -135,8 +127,8 @@ pub async fn oidc_reload(
 
     // New identity_with_credentials
     let identity_with_credentials = ory_client::apis::identity_api::get_identity(
-        &configuration,
-        &payload.identity_id,
+        configuration,
+        &identity_with_credentials.id,
         Some(vec!["oidc".to_string()]),
     )
     .await
