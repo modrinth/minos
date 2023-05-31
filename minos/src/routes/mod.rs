@@ -30,6 +30,7 @@ pub fn user_config(cfg: &mut web::ServiceConfig) {
 pub fn admin_config(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("admin")
+            .service(user::user_get_id_by_token)
             .service(user::user_get_id)
             .service(oidc::oidc_reload)
             .service(delete::delete_all)
@@ -121,6 +122,10 @@ pub enum OryError {
     #[error("Delete Identity error: {0}")]
     DeleteIdentityError(
         #[from] ory_client::apis::Error<ory_client::apis::identity_api::DeleteIdentityError>,
+    ),
+    #[error("Get Session error: {0}")]
+    GetSessionError(
+        #[from] ory_client::apis::Error<ory_client::apis::identity_api::GetSessionError>,
     ),
     #[error("Create login flow error: {0}")]
     CreateLoginFlowError(

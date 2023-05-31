@@ -1,7 +1,10 @@
 use crate::routes::{ApiError, OryError};
 use actix_web::{get, web, HttpResponse};
 use ory_client::{
-    apis::{configuration::Configuration, identity_api::get_identity},
+    apis::{
+        configuration::Configuration,
+        identity_api::{self, get_identity},
+    },
     models::{Identity, Session},
 };
 use serde::{Deserialize, Serialize};
@@ -82,6 +85,37 @@ pub async fn user_get_id(
         .await
         .map_err(OryError::from)?;
     let minos_user = extract_minos_user(&identity)?;
+    Ok(HttpResponse::Ok().json(minos_user))
+}
+
+// /admin/user/token
+// Protected by admin bearer token, should be accessed by labrinth only (or by admins)
+// Get a user as a MinosUser struct (a simplified identity as relevant to labrinth)
+// User identified is the *session token passed*. If Ory session token is "12345-12345",
+// you can use "ory_12345-12345" as a Labrinth token to get the user here.
+// (User should be able to pass the cookie info as a bearer token, and this facilitates that)
+#[derive(Serialize, Deserialize)]
+pub struct Token {
+    pub token: String,
+}
+#[get("/user/token")]
+pub async fn user_get_id_by_token(
+    web::Query(token): web::Query<Token>,
+    configuration: web::Data<Configuration>,
+) -> Result<HttpResponse, ApiError> {
+    // If it starts with "ory_", remove it to extract raw session ID
+    let token = Token {
+        token: token.token.trim_start_matches("ory_").to_string(),
+    };
+    println!("token: {}", token.token);
+    let session = identity_api::get_session(
+        &configuration,
+        &token.token,
+        Some(vec!["Identity".to_string()]),
+    )
+    .await
+    .map_err(OryError::from)?;
+    let minos_user = extract_minos_user(&session.identity)?;
     Ok(HttpResponse::Ok().json(minos_user))
 }
 
