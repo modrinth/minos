@@ -1,23 +1,28 @@
-# pull the base image
-FROM node:lts-alpine
+# use node 16 alpine image
+FROM node:16-alpine
 
-# set the working direction
+# create work directory in app folder
 WORKDIR /app
 
-# add `/app/node_modules/.bin` to $PATH
-ENV PATH /app/node_modules/.bin:$PATH
+# install required packages for node image
+RUN apk --no-cache add openssh g++ make python3 git
 
-# install app dependencies
-COPY package.json ./
+# copy over package.json files
+COPY package.json /app/
+COPY yarn.lock /app/
 
-COPY yarn.lock ./
+# install all depencies
+RUN yarn install
 
-# RUN npm install
+# copy over all files to the work directory
+ADD . /app
 
-RUN yarn
+# build the project
+RUN yarn run build
 
-# add app
-COPY . ./
+# expose the host and port 3000 to the server
+ENV HOST 0.0.0.0
+EXPOSE 4455
 
-# start app
-CMD ["yarn", "dev"]
+# run the build project with node
+ENTRYPOINT ["node", ".output/server/index.mjs"]
