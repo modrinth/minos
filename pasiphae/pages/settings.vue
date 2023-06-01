@@ -74,25 +74,23 @@ const linkProviders = ref([])
 const unlinkProviders = ref([])
 
 async function updateFlow() {
-  $oryConfig
-    .getSettingsFlow({ id: route.query.flow || '' })
-    .then((r) => {
-      flowData.value = r.data
-      linkProviders.value = extractOidcLinkProviders(r.data)
-      unlinkProviders.value = extractOidcUnlinkProviders(r.data)
-      oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
-    })
-    // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
-    // Any other error we just leave the page
-    .catch((e) => {
-      if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
-        window.location.href = e.response.data.redirect_browser_to
-      } else if ('response' in e && e.response.status === 404) {
-        navigateTo(config.oryUrl + '/self-service/settings/browser', { external: true })
-      } else {
-        navigateTo('/')
-      }
-    })
+  try {
+    const r = await $oryConfig
+        .getSettingsFlow({ id: route.query.flow || '' })
+
+    flowData.value = r.data
+    linkProviders.value = extractOidcLinkProviders(r.data)
+    unlinkProviders.value = extractOidcUnlinkProviders(r.data)
+    oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
+  } catch (e) {
+    if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
+      navigateTo(e.response.data.redirect_browser_to, { external: true })
+    } else if ('response' in e && e.response.status === 404) {
+      navigateTo(config.oryUrl + '/self-service/settings/browser', { external: true })
+    } else {
+      navigateTo('/')
+    }
+  }
 }
 updateFlow()
 

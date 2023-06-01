@@ -66,24 +66,23 @@ const password = ref('')
 // Attempt to get flow information on page load
 const flowData = ref(null)
 const providers = ref([])
-$oryConfig
-  .getLoginFlow({ id: route.query.flow || '' })
-  .then((r) => {
-    flowData.value = r.data
-    providers.value = extractOidcProviders(r.data)
-    oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
-  })
-  // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
-  // Any other error we just leave the page
-  .catch((e) => {
-    if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
-      window.location.href = e.response.data.redirect_browser_to
-    } else if (e.response && e.response.status === 404) {
-      navigateTo(config.oryUrl + '/self-service/login/browser', { external: true })
-    } else {
-      navigateTo('/')
-    }
-  })
+
+try {
+  const r = await $oryConfig
+      .getLoginFlow({ id: route.query.flow || '' })
+
+  flowData.value = r.data
+  providers.value = extractOidcProviders(r.data)
+  oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
+} catch (e) {
+  if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
+    navigateTo(e.response.data.redirect_browser_to, { external: true })
+  } else if (e.response && e.response.status === 404) {
+    navigateTo(config.oryUrl + '/self-service/login/browser', { external: true })
+  } else {
+    navigateTo('/')
+  }
+}
 
 const icons = {
   discord: DiscordIcon,
