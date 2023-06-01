@@ -55,36 +55,34 @@ const code = ref(route.query.code ?? '')
 // Attempt to get flow information on page load
 const flowData = ref(null)
 async function updateFlow() {
-  $oryConfig
-    .getVerificationFlow({ id: route.query.flow || '' })
-    .then((r) => {
-      flowData.value = r.data
-      oryUiMsgs.value = extractNestedErrorMessagesFromUiData(flowData.value)
+  try {
+    const r = await $oryConfig
+        .getVerificationFlow({ id: route.query.flow || '' })
 
-      // // If they clicked on the email link and the flow is still the same, the flow.data.ui object
-      // // will contain 'code' amongst its UI nodes with the verification code- which ideally can be put automatically
-      // // into the field so they can just verify it and continue.
-      if (flowData.value.state === 'sent_email') {
-        const returnedNodes = r.data.ui.nodes
-        for (let i = 0; i < returnedNodes.length; i++) {
-          if (returnedNodes[i].group === 'code' && returnedNodes[i].attributes.name === 'code') {
-            code.value = returnedNodes[i].attributes.value
-            break
-          }
+    flowData.value = r.data
+    oryUiMsgs.value = extractNestedErrorMessagesFromUiData(flowData.value)
+
+    // // If they clicked on the email link and the flow is still the same, the flow.data.ui object
+    // // will contain 'code' amongst its UI nodes with the verification code- which ideally can be put automatically
+    // // into the field so they can just verify it and continue.
+    if (flowData.value.state === 'sent_email') {
+      const returnedNodes = r.data.ui.nodes
+      for (let i = 0; i < returnedNodes.length; i++) {
+        if (returnedNodes[i].group === 'code' && returnedNodes[i].attributes.name === 'code') {
+          code.value = returnedNodes[i].attributes.value
+          break
         }
       }
-    })
-    // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
-    // Any other error we just leave the page
-    .catch((e) => {
-      if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
-        window.location.href = e.response.data.redirect_browser_to
-      } else if (e.response.status === 404) {
-        navigateTo(config.oryUrl + '/self-service/settings/browser', { external: true })
-      } else {
-        navigateTo('')
-      }
-    })
+    }
+  } catch (e) {
+    if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
+      navigateTo(e.response.data.redirect_browser_to, { external: true })
+    } else if (e.response.status === 404) {
+      navigateTo(config.oryUrl + '/self-service/settings/browser', { external: true })
+    } else {
+      navigateTo('')
+    }
+  }
 }
 updateFlow()
 

@@ -68,24 +68,23 @@ const confirmPassword = ref('')
 // Attempt to get flow information on page load
 const flowData = ref(null)
 const providers = ref([])
-$oryConfig
-  .getRegistrationFlow({ id: route.query.flow || '' })
-  .then((r) => {
-    flowData.value = r.data
-    providers.value = extractOidcProviders(r.data)
-    oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
-  })
-  // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
-  // Any other error we just leave the page
-  .catch((e) => {
-    if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
-      window.location.href = e.response.data.redirect_browser_to
-    } else if ('response' in e && e.response.status === 404) {
-      navigateTo(config.oryUrl + '/self-service/registration/browser', { external: true })
-    } else {
-      navigateTo('/')
-    }
-  })
+
+try {
+  const val = await $oryConfig
+      .getRegistrationFlow({ id: route.query.flow || '' })
+
+  flowData.value = val.data
+  providers.value = extractOidcProviders(val.data)
+  oryUiMsgs.value = extractNestedErrorMessagesFromUiData(val.data)
+} catch (err) {
+  if ('response' in err && 'data' in err.response && 'redirect_browser_to' in err.response.data) {
+    navigateTo(err.response.data.redirect_browser_to, { external: true })
+  } else if ('response' in err && err.response.status === 404) {
+    navigateTo(config.oryUrl + '/self-service/registration/browser', { external: true })
+  } else {
+    navigateTo('/')
+  }
+}
 
 async function registerPassword() {
   if (password.value !== confirmPassword.value) {

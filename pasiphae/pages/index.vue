@@ -44,26 +44,30 @@ const apiResponse = ref(null)
 
 // Fetch the session directly from Ory
 // Authentication is successful if cookie represents a valid Ory Session
-app.$oryConfig.toSession().then(({ data }) => {
+try {
+  const { data } = await app.$oryConfig.toSession()
   session.value = data
 
-  // If the user is logged in, we want to show a logout link!
-  app.$oryConfig.createBrowserLogoutFlow().then(({ data }) => {
-    logoutUrl.value = data.logout_url
+  const { data: newData }  = await app.$oryConfig.createBrowserLogoutFlow()
+  logoutUrl.value = newData.logout_url
+} catch (err) {
+  console.error(err)
+}
+
+try {
+  const { res }  = await fetch(config.minosUrl + '/user/session', {
+    credentials: 'include',
   })
-})
+
+  const json = await res.json()
+  apiResponse.value = json
+} catch (err) {
+  console.error(err)
+}
 
 // Make an authenticated request to Minos API
 // /demo is a test endpoint that returns 200 if successful authentication, 401 if failure to authenticate.
 // (This does the same authentication check as the ory.toSession() above, but remotely in the Minos endpoint on the Rust side)
 // response body is that session object
-fetch(config.minosUrl + '/user/session', {
-  // "/"
-  // Do not forget to set this - it is required to send the session cookie!
-  credentials: 'include',
-}).then((res) => {
-  res.json().then((res) => {
-    apiResponse.value = res
-  })
-})
+
 </script>
