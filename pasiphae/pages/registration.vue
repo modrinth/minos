@@ -68,24 +68,26 @@ const confirmPassword = ref('')
 // Attempt to get flow information on page load
 const flowData = ref(null)
 const providers = ref([])
-$oryConfig
+
+try {
+  const r = $oryConfig
   .getRegistrationFlow({ id: route.query.flow || '' })
-  .then((r) => {
-    flowData.value = r.data
+  flowData.value = r.data
     providers.value = extractOidcProviders(r.data)
     oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
-  })
+
+}
   // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
   // Any other error we just leave the page
-  .catch((e) => {
+  catch(e) {
     if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
-      window.location.href = e.response.data.redirect_browser_to
+      navigateTo( e.response.data.redirect_browser_to, { external: true })
     } else if ('response' in e && e.response.status === 404) {
       navigateTo(config.oryUrl + '/self-service/registration/browser', { external: true })
     } else {
       navigateTo('/')
     }
-  })
+  }
 
 async function registerPassword() {
   if (password.value !== confirmPassword.value) {
@@ -143,31 +145,27 @@ async function registerOidc(provider) {
 
 // loginFlowBody must match a variant of UpdateLoginFlowWith<method>Method (included are UpdateLoginFlowWithOidcMethod | UpdateLoginFlowWithPasswordMethod)
 async function registerGeneric(registrationFlowBody) {
-  // Update registration flow using passed method of choice
-  await $oryConfig
+  try {
+    await $oryConfig
     .updateRegistrationFlow({
       flow: route.query.flow,
       updateRegistrationFlowBody: registrationFlowBody,
     })
-    .then((_r) => {
-      // If return_to exists, return to it, otherwise return to site main page
-      const returnUrl = flowData.value.return_to || config.nuxtUrl
-      window.location.href = returnUrl
-    })
-    .catch((e) => {
+    const returnUrl = flowData.value.return_to || config.nuxtUrl
+      navigateTo(returnUrl, { external: true })
+
+  } catch(e) {
       // Using Social-integrated login/registration will return a 422: Unprocessable Entity error with a redirection link.
       // We use this to continue the flow.
       // (TODO: this is weird, is this a bug?)
       if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
-        window.location.href = e.response.data.redirect_browser_to
-      } else if (e.response.status === 422) {
-        window.location.href = e.response.data.redirect_browser_to
+        navigateTo( e.response.data.redirect_browser_to, { external: true })
         return
-      }
+      } 
 
       // Get displayable error messsages from nested returned Ory UI elements
       oryUiMsgs.value = extractNestedErrorMessagesFromError(e)
-    })
+    }
 }
 </script>
 <style src="~/assets/login.css"></style>

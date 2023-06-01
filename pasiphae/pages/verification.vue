@@ -55,10 +55,10 @@ const code = ref(route.query.code ?? '')
 // Attempt to get flow information on page load
 const flowData = ref(null)
 async function updateFlow() {
-  $oryConfig
+  try {
+    const r =   $oryConfig
     .getVerificationFlow({ id: route.query.flow || '' })
-    .then((r) => {
-      flowData.value = r.data
+    flowData.value = r.data
       oryUiMsgs.value = extractNestedErrorMessagesFromUiData(flowData.value)
 
       // // If they clicked on the email link and the flow is still the same, the flow.data.ui object
@@ -73,20 +73,22 @@ async function updateFlow() {
           }
         }
       }
-    })
+
+
+  }
     // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
     // Any other error we just leave the page
-    .catch((e) => {
+    catch(e) {
       if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
-        window.location.href = e.response.data.redirect_browser_to
+        navigateTo(e.response.data.redirect_browser_to, { external: true })
       } else if (e.response.status === 404) {
         navigateTo(config.oryUrl + '/self-service/settings/browser', { external: true })
       } else {
         navigateTo('')
       }
-    })
+    }
 }
-updateFlow()
+await updateFlow()
 
 // Attempts to verify an account with the given 'code' (sent to an email with the registration flow)
 async function verify() {
@@ -107,20 +109,23 @@ async function verify() {
       email: code.value,
     }
   }
-  // updateVerificationFlow, submitting and checking with verification code
-  await $oryConfig
+
+  try {
+    const r = await $oryConfig
     .updateVerificationFlow({
       flow: route.query.flow,
       updateVerificationFlowBody: body,
     })
-    .then((r) => {
       oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
       // Success!
-      updateFlow()
-    })
-    .catch((e) => {
+      await updateFlow()
+
+
+  }
+  // updateVerificationFlow, submitting and checking with verification code
+      catch(e) {
       // Get displayable error messsages from nested returned Ory UI elements
       oryUiMsgs.value = extractNestedErrorMessagesFromError(e)
-    })
+    }
 }
 </script>

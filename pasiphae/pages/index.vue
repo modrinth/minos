@@ -40,37 +40,20 @@ const verificationFlowEndpoint = ref(config.oryUrl + '/self-service/verification
 
 const session = ref(null)
 const logoutUrl = ref(null)
-const apiResponse = ref(null)
 
 // Fetch the session directly from Ory
 // Authentication is successful if cookie represents a valid Ory Session
-app.$oryConfig
-  .toSession()
-  .then(({ data }) => {
-    session.value = data
-    // If the user is logged in, we want to show a logout link!
-    app.$oryConfig.createBrowserLogoutFlow().then(({ data }) => {
-      logoutUrl.value = data.logout_url
-    })
-  })
-  .catch((e) => {
-    if ((e.response && e.response.status === 404) || e.response.status === 403) {
-      // 403 likely means another level of auth is needed- either way, reauthenticate with a new flow
-      navigateTo(config.oryUrl + '/self-service/login/browser?aal=aal2', { external: true })
-    }
-  })
+try {
+  const data = await app.$oryConfig.toSession()
+  session.value = data
 
-// Make an authenticated request to Minos API
-// /demo is a test endpoint that returns 200 if successful authentication, 401 if failure to authenticate.
-// (This does the same authentication check as the ory.toSession() above, but remotely in the Minos endpoint on the Rust side)
-// response body is that session object
-fetch(config.minosUrl + '/user/session', {
-  // "/"
-  // Do not forget to set this - it is required to send the session cookie!
-  credentials: 'include',
-}).then((res) => {
-  res.json().then((res) => {
-    apiResponse.value = res
-  })
-})
+  const logout_data = await app.$oryConfig.createBrowserLogoutFlow();
+  logoutUrl.value = logout_data.logout_url
+
+} catch (e) {
+  if ((e.response && e.response.status === 404) || e.response.status === 403) {
+    // 403 likely means another level of auth is needed- either way, reauthenticate with a new flow
+    navigateTo(config.oryUrl + '/self-service/login/browser?aal=aal2', { external: true })
+  }
+}
 </script>

@@ -168,14 +168,14 @@ const showLookupRegenerate = ref(false)
 const showLookupDisable = ref(false)
 
 async function updateFlow() {
-  $oryConfig
-    .getSettingsFlow({ id: route.query.flow || '' })
-    .then((r) => {
+  try {
+    const r = await $oryConfig
+    .getSettingsFlow({ id: route.query.flow || '' });
+
       flowData.value = r.data
       linkProviders.value = extractOidcLinkProviders(r.data)
       unlinkProviders.value = extractOidcUnlinkProviders(r.data)
       oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
-      console.log(JSON.stringify(r.data))
 
       let totp = extractNestedTotpData(r.data)
       if (totp.image && totp.secret) {
@@ -196,22 +196,20 @@ async function updateFlow() {
         showLookupRegenerate.value = look.regenerateButton
         showLookupDisable.value = look.disableButton
       }
-    })
+    }
     // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
     // Any other error we just leave the page
-    .catch((e) => {
-      console.log(e)
-      console.log(JSON.stringify(e))
+    catch(e) {
       if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
-        window.location.href = e.response.data.redirect_browser_to
+        navigateTo(e.response.data.redirect_browser_to, { external: true })
       } else if ('response' in e && e.response.status === 404) {
         navigateTo(config.oryUrl + '/self-service/settings/browser', { external: true })
       } else {
         navigateTo('/')
       }
-    })
+    }
 }
-updateFlow()
+await updateFlow()
 
 const icons = {
   discord: DiscordIcon,
@@ -280,7 +278,6 @@ async function disableLookupSecrets() {
     lookup_secret_disable: true,
     lookup_secret_regenerate: false,
   }
-  console.log(JSON.stringify(updateSettingsFlowBody))
   await sendUpdate(updateSettingsFlowBody)
 }
 
@@ -307,28 +304,29 @@ async function sendUpdate(updateSettingsFlowBody) {
   let csrf_token = extractNestedCsrfToken(flowData.value) // must be directly set
   updateSettingsFlowBody.csrf_token = csrf_token
 
-  await $oryConfig
+  try {
+    await $oryConfig
     .updateSettingsFlow({
       flow: route.query.flow,
       updateSettingsFlowBody: updateSettingsFlowBody,
     })
-    .then((_r) => {
-      // If return_to exists, return to it, otherwise refresh data
-      const returnUrl = flowData.value.return_to
+    const returnUrl = flowData.value.return_to
       if (returnUrl) {
-        window.location.href = returnUrl
+        navigateTo(returnUrl, { external: true })
+
       } else {
-        updateFlow()
+        await updateFlow()
       }
-    })
-    .catch((e) => {
+
+      } catch(e) {
       if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
-        window.location.href = e.response.data.redirect_browser_to
+        navigateTo(e.response.data.redirect_browser_to, { external: true })
+
       } else {
         // Get displayable error messsages from nested returned Ory UI elements
         oryUiMsgs.value = extractNestedErrorMessagesFromError(e)
       }
-    })
+    }
 }
 </script>
 <style src="~/assets/settings.css"></style>
