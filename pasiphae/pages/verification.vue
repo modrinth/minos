@@ -56,37 +56,33 @@ const code = ref(route.query.code ?? '')
 const flowData = ref(null)
 async function updateFlow() {
   try {
-    const r =   $oryConfig
-    .getVerificationFlow({ id: route.query.flow || '' })
+    const r = $oryConfig.getVerificationFlow({ id: route.query.flow || '' })
     flowData.value = r.data
-      oryUiMsgs.value = extractNestedErrorMessagesFromUiData(flowData.value)
+    oryUiMsgs.value = extractNestedErrorMessagesFromUiData(flowData.value)
 
-      // // If they clicked on the email link and the flow is still the same, the flow.data.ui object
-      // // will contain 'code' amongst its UI nodes with the verification code- which ideally can be put automatically
-      // // into the field so they can just verify it and continue.
-      if (flowData.value.state === 'sent_email') {
-        const returnedNodes = r.data.ui.nodes
-        for (let i = 0; i < returnedNodes.length; i++) {
-          if (returnedNodes[i].group === 'code' && returnedNodes[i].attributes.name === 'code') {
-            code.value = returnedNodes[i].attributes.value
-            break
-          }
+    // // If they clicked on the email link and the flow is still the same, the flow.data.ui object
+    // // will contain 'code' amongst its UI nodes with the verification code- which ideally can be put automatically
+    // // into the field so they can just verify it and continue.
+    if (flowData.value.state === 'sent_email') {
+      const returnedNodes = r.data.ui.nodes
+      for (let i = 0; i < returnedNodes.length; i++) {
+        if (returnedNodes[i].group === 'code' && returnedNodes[i].attributes.name === 'code') {
+          code.value = returnedNodes[i].attributes.value
+          break
         }
       }
-
-
-  }
+    }
+  } catch (e) {
     // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
     // Any other error we just leave the page
-    catch(e) {
-      if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
-        navigateTo(e.response.data.redirect_browser_to, { external: true })
-      } else if (e.response.status === 404) {
-        navigateTo(config.oryUrl + '/self-service/settings/browser', { external: true })
-      } else {
-        navigateTo('')
-      }
+    if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
+      navigateTo(e.response.data.redirect_browser_to, { external: true })
+    } else if (e.response.status === 404) {
+      navigateTo(config.oryUrl + '/self-service/settings/browser', { external: true })
+    } else {
+      navigateTo('')
     }
+  }
 }
 await updateFlow()
 
@@ -111,21 +107,17 @@ async function verify() {
   }
 
   try {
-    const r = await $oryConfig
-    .updateVerificationFlow({
+    const r = await $oryConfig.updateVerificationFlow({
       flow: route.query.flow,
       updateVerificationFlowBody: body,
     })
-      oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
-      // Success!
-      await updateFlow()
-
-
+    oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
+    // Success!
+    await updateFlow()
+  } catch (e) {
+    // updateVerificationFlow, submitting and checking with verification code
+    // Get displayable error messsages from nested returned Ory UI elements
+    oryUiMsgs.value = extractNestedErrorMessagesFromError(e)
   }
-  // updateVerificationFlow, submitting and checking with verification code
-      catch(e) {
-      // Get displayable error messsages from nested returned Ory UI elements
-      oryUiMsgs.value = extractNestedErrorMessagesFromError(e)
-    }
 }
 </script>

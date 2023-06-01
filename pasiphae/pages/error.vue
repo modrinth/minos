@@ -32,10 +32,9 @@ const { $oryConfig } = useNuxtApp()
 const route = useRoute()
 
 try {
-  const r = await $oryConfig.getFlowError({ id: route.query.id});
+  const r = await $oryConfig.getFlowError({ id: route.query.id })
   oryUiError.value = r.data.error
-}
-catch (e) {
+} catch (e) {
   oryUiError.value = JSON.stringify(e)
 }
 

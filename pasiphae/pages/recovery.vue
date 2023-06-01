@@ -55,24 +55,21 @@ const code = ref('')
 const flowData = ref(null)
 async function updateFlow() {
   try {
-  const r = await $oryConfig
-    .getRecoveryFlow({ id: route.query.flow });
+    const r = await $oryConfig.getRecoveryFlow({ id: route.query.flow })
 
-          flowData.value = r.data
-      oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
-    
-} catch(e){
+    flowData.value = r.data
+    oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
+  } catch (e) {
     // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
     // Any other error we just leave the page
     if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
-
-        navigateTo(e.response.data.redirect_browser_to, { external: true })
-      } else if (e.response.status === 404) {
-        navigateTo(config.oryUrl + '/self-service/recovery/browser', { external: true })
-      } else {
-        navigateTo('/')
-      }
+      navigateTo(e.response.data.redirect_browser_to, { external: true })
+    } else if (e.response.status === 404) {
+      navigateTo(config.oryUrl + '/self-service/recovery/browser', { external: true })
+    } else {
+      navigateTo('/')
     }
+  }
 }
 await updateFlow()
 
@@ -80,45 +77,43 @@ await updateFlow()
 async function recovery() {
   try {
     // updateRecoveryFlow, which will send an code+link to the provided email
-    await $oryConfig
-      .updateRecoveryFlow({
-        flow: route.query.flow,
-        updateRecoveryFlowBody: {
-          csrf_token: extractNestedCsrfToken(flowData.value), // must be directly set
-          email: email.value, // MUST be an email identifier, not just a usernmae
-          method: 'code',
-        },
-      });
-      oryUiMsgs.value = []
+    await $oryConfig.updateRecoveryFlow({
+      flow: route.query.flow,
+      updateRecoveryFlowBody: {
+        csrf_token: extractNestedCsrfToken(flowData.value), // must be directly set
+        email: email.value, // MUST be an email identifier, not just a usernmae
+        method: 'code',
+      },
+    })
+    oryUiMsgs.value = []
     await updateFlow()
-} catch(e) {
-      if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
-        navigateTo( e.response.data.redirect_browser_to, { external: true })
-      } else {
-        // Get displayable error messsages from nested returned Ory UI elements
-        oryUiMsgs.value = extractNestedErrorMessagesFromError(e)
-      }
+  } catch (e) {
+    if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
+      navigateTo(e.response.data.redirect_browser_to, { external: true })
+    } else {
+      // Get displayable error messsages from nested returned Ory UI elements
+      oryUiMsgs.value = extractNestedErrorMessagesFromError(e)
     }
+  }
 }
 
 // Attempts to recover an account with the given 'email' and 'code' (sent to an email with the recovery() function)
 async function submitCode() {
   // updateRecoveryFlow, but pass the 'code' field to attempt to recover using that code
   try {
-  await $oryConfig
-    .updateRecoveryFlow({
+    await $oryConfig.updateRecoveryFlow({
       flow: route.query.flow,
       updateRecoveryFlowBody: {
         csrf_token: extractNestedCsrfToken(flowData.value), // must be directly set
         method: 'code',
         code: code.value,
       },
-    });
+    })
 
-    await  updateFlow()
-  } catch(e) {
-      // Get displayable error messsages from nested returned Ory UI elements
-      oryUiMsgs.value = extractNestedErrorMessagesFromError(e)
-    }
+    await updateFlow()
+  } catch (e) {
+    // Get displayable error messsages from nested returned Ory UI elements
+    oryUiMsgs.value = extractNestedErrorMessagesFromError(e)
+  }
 }
 </script>

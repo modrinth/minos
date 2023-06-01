@@ -98,27 +98,25 @@ const providers = ref([])
 
 async function updateFlow() {
   try {
-    const r = await $oryConfig
-    .getLoginFlow({ id: route.query.flow || '' });
+    const r = await $oryConfig.getLoginFlow({ id: route.query.flow || '' })
     flowData.value = r.data
-      providers.value = extractOidcProviders(r.data)
-      oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
+    providers.value = extractOidcProviders(r.data)
+    oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
 
-      // Show a logout link (in particular)
-      if (r.data.requested_aal == 'aal2') {
-        const data = await app.$oryConfig.createBrowserLogoutFlow()
-          logoutUrl.value = data.logout_url
-      }
-
-  } catch(e) {
-      if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
-        navigateTo( e.response.data.redirect_browser_to, { external: true })
-      } else if ((e.response && e.response.status === 404) || e.response.status === 403) {
-        // 403 likely means another level of auth is needed- either way, reauthenticate with a new flow
-        navigateTo(config.oryUrl + '/self-service/login/browser', { external: true })
-      } else {
-        oryUiMsgs.value = extractNestedErrorMessagesFromError(e)
-      }
+    // Show a logout link (in particular)
+    if (r.data.requested_aal == 'aal2') {
+      const data = await app.$oryConfig.createBrowserLogoutFlow()
+      logoutUrl.value = data.logout_url
+    }
+  } catch (e) {
+    if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
+      navigateTo(e.response.data.redirect_browser_to, { external: true })
+    } else if ((e.response && e.response.status === 404) || e.response.status === 403) {
+      // 403 likely means another level of auth is needed- either way, reauthenticate with a new flow
+      navigateTo(config.oryUrl + '/self-service/login/browser', { external: true })
+    } else {
+      oryUiMsgs.value = extractNestedErrorMessagesFromError(e)
+    }
   }
 }
 await updateFlow()
@@ -183,26 +181,23 @@ async function sendUpdate(loginFlowBody) {
   let csrf_token = extractNestedCsrfToken(flowData.value) // must be directly set
   loginFlowBody.csrf_token = csrf_token
   try {
-  await $oryConfig
-    .updateLoginFlow({
+    await $oryConfig.updateLoginFlow({
       flow: route.query.flow,
       updateLoginFlowBody: loginFlowBody,
-    });
+    })
 
     await updateFlow()
-      // If return_to exists, return to it, otherwise refresh data
-      const returnUrl = flowData.value.return_to || config.nuxtUrl
-      navigateTo(returnUrl, { external: true })
-  } catch(e) {
-
-      if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
-        navigateTo(e.response.data.redirect_browser_to, { external: true })
-
-      } else {
-        // Get displayable error messsages from nested returned Ory UI elements
-        oryUiMsgs.value = extractNestedErrorMessagesFromError(e)
-      }
+    // If return_to exists, return to it, otherwise refresh data
+    const returnUrl = flowData.value.return_to || config.nuxtUrl
+    navigateTo(returnUrl, { external: true })
+  } catch (e) {
+    if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
+      navigateTo(e.response.data.redirect_browser_to, { external: true })
+    } else {
+      // Get displayable error messsages from nested returned Ory UI elements
+      oryUiMsgs.value = extractNestedErrorMessagesFromError(e)
     }
+  }
 }
 </script>
 

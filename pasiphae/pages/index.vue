@@ -47,9 +47,8 @@ try {
   const data = await app.$oryConfig.toSession()
   session.value = data
 
-  const logout_data = await app.$oryConfig.createBrowserLogoutFlow();
+  const logout_data = await app.$oryConfig.createBrowserLogoutFlow()
   logoutUrl.value = logout_data.logout_url
-
 } catch (e) {
   if ((e.response && e.response.status === 404) || e.response.status === 403) {
     // 403 likely means another level of auth is needed- either way, reauthenticate with a new flow

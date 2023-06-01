@@ -169,45 +169,43 @@ const showLookupDisable = ref(false)
 
 async function updateFlow() {
   try {
-    const r = await $oryConfig
-    .getSettingsFlow({ id: route.query.flow || '' });
+    const r = await $oryConfig.getSettingsFlow({ id: route.query.flow || '' })
 
-      flowData.value = r.data
-      linkProviders.value = extractOidcLinkProviders(r.data)
-      unlinkProviders.value = extractOidcUnlinkProviders(r.data)
-      oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
+    flowData.value = r.data
+    linkProviders.value = extractOidcLinkProviders(r.data)
+    unlinkProviders.value = extractOidcUnlinkProviders(r.data)
+    oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
 
-      let totp = extractNestedTotpData(r.data)
-      if (totp.image && totp.secret) {
-        totpQRImage.value = totp.image.src
-        totpQRWidth.value = totp.image.width
-        totpQRHeight.value = totp.image.height
-        totpSecret.value = totp.secret
-      } else {
-        totpQRImage.value = null
-        totpQRWidth.value = null
-        totpQRHeight.value = null
-        totpSecret.value = null
-      }
-
-      let look = extractNestedLookupCodes(r.data)
-      if (look) {
-        lookupCodes.value = look.codes
-        showLookupRegenerate.value = look.regenerateButton
-        showLookupDisable.value = look.disableButton
-      }
+    let totp = extractNestedTotpData(r.data)
+    if (totp.image && totp.secret) {
+      totpQRImage.value = totp.image.src
+      totpQRWidth.value = totp.image.width
+      totpQRHeight.value = totp.image.height
+      totpSecret.value = totp.secret
+    } else {
+      totpQRImage.value = null
+      totpQRWidth.value = null
+      totpQRHeight.value = null
+      totpSecret.value = null
     }
+
+    let look = extractNestedLookupCodes(r.data)
+    if (look) {
+      lookupCodes.value = look.codes
+      showLookupRegenerate.value = look.regenerateButton
+      showLookupDisable.value = look.disableButton
+    }
+  } catch (e) {
     // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
     // Any other error we just leave the page
-    catch(e) {
-      if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
-        navigateTo(e.response.data.redirect_browser_to, { external: true })
-      } else if ('response' in e && e.response.status === 404) {
-        navigateTo(config.oryUrl + '/self-service/settings/browser', { external: true })
-      } else {
-        navigateTo('/')
-      }
+    if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
+      navigateTo(e.response.data.redirect_browser_to, { external: true })
+    } else if ('response' in e && e.response.status === 404) {
+      navigateTo(config.oryUrl + '/self-service/settings/browser', { external: true })
+    } else {
+      navigateTo('/')
     }
+  }
 }
 await updateFlow()
 
@@ -305,28 +303,24 @@ async function sendUpdate(updateSettingsFlowBody) {
   updateSettingsFlowBody.csrf_token = csrf_token
 
   try {
-    await $oryConfig
-    .updateSettingsFlow({
+    await $oryConfig.updateSettingsFlow({
       flow: route.query.flow,
       updateSettingsFlowBody: updateSettingsFlowBody,
     })
     const returnUrl = flowData.value.return_to
-      if (returnUrl) {
-        navigateTo(returnUrl, { external: true })
-
-      } else {
-        await updateFlow()
-      }
-
-      } catch(e) {
-      if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
-        navigateTo(e.response.data.redirect_browser_to, { external: true })
-
-      } else {
-        // Get displayable error messsages from nested returned Ory UI elements
-        oryUiMsgs.value = extractNestedErrorMessagesFromError(e)
-      }
+    if (returnUrl) {
+      navigateTo(returnUrl, { external: true })
+    } else {
+      await updateFlow()
     }
+  } catch (e) {
+    if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
+      navigateTo(e.response.data.redirect_browser_to, { external: true })
+    } else {
+      // Get displayable error messsages from nested returned Ory UI elements
+      oryUiMsgs.value = extractNestedErrorMessagesFromError(e)
+    }
+  }
 }
 </script>
 <style src="~/assets/settings.css"></style>
