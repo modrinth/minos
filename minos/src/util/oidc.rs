@@ -1,8 +1,5 @@
 use actix_web::HttpResponse;
-use ory_client::{
-    apis::configuration::Configuration,
-    models::{json_patch::OpEnum, Identity, JsonPatch},
-};
+use ory_client::models::{json_patch::OpEnum, Identity, JsonPatch};
 use serde::{Deserialize, Serialize};
 
 use sqlx::pool;
@@ -12,7 +9,7 @@ use crate::{
     routes::{user::MinosSessionMetadataPublic, ApiError, OryError},
 };
 
-use super::callback::CallbackError;
+use super::{callback::CallbackError, ory::AdminConfiguration};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Payload {
@@ -36,7 +33,7 @@ pub struct OidcDataProvider {
 pub async fn oidc_reload(
     identity_with_credentials: &Identity,
     pool: &pool::Pool<sqlx::Postgres>,
-    configuration: &Configuration,
+    configuration: &AdminConfiguration,
 ) -> Result<actix_web::HttpResponse, ApiError> {
     // Get the oidc data from database
     let credentials = identity_with_credentials
@@ -111,7 +108,7 @@ pub async fn oidc_reload(
         value: Some(serde_json::to_value(metadata_public)?),
     };
     ory_client::apis::identity_api::patch_identity(
-        configuration,
+        &configuration.0,
         &identity_with_credentials.id,
         Some(vec![json_patch]),
     )
@@ -120,7 +117,7 @@ pub async fn oidc_reload(
 
     // New identity_with_credentials
     let identity_with_credentials = ory_client::apis::identity_api::get_identity(
-        configuration,
+        &configuration.0,
         &identity_with_credentials.id,
         Some(vec!["oidc".to_string()]),
     )
