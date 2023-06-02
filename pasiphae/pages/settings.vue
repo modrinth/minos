@@ -1,21 +1,17 @@
 <template>
-  <template v-if="flowData">
+  <div v-if="flowData" class="page-container">
+    <h1>Authenticaton settings</h1>
     <div v-if="oryUiMsgs.length > 0" class="errors">
       <p v-for="oryUiMsg in oryUiMsgs" :key="oryUiMsg">
         {{ oryUiMsg.text }}
       </p>
     </div>
-    <h1>Edit your password</h1>
+    <h2>Edit your password</h2>
     <input v-model="password" placeholder="Password" type="password" />
     <input v-model="confirmPassword" placeholder="Confirm Password" type="password" />
-    <button @click="updatePassword" class="btn btn-primary continue-btn">Reset password</button>
-    <div class="text-divider">
-      <div></div>
-      <span>or</span>
-      <div></div>
-    </div>
-    <div v-if="linkProviders.length > 0">
-      <h1>Link a social account</h1>
+    <button class="btn btn-primary continue-btn" @click="updatePassword">Reset password</button>
+    <template v-if="linkProviders.length > 0">
+      <h2>Link additional social accounts</h2>
       <div class="third-party-link">
         <Button
           v-for="provider in linkProviders"
@@ -26,16 +22,9 @@
           <component :is="getIcon(provider)" /> <span>{{ capitalizeFirstLetter(provider) }}</span>
         </Button>
       </div>
-    </div>
+    </template>
     <div v-if="unlinkProviders.length > 0">
-      <div class="text-divider">
-        <div></div>
-        <span>or</span>
-        <div></div>
-      </div>
-    </div>
-    <div v-if="unlinkProviders.length > 0">
-      <h1>Unlink a social account</h1>
+      <h2>Unlink a social account</h2>
       <div class="third-party-link">
         <Button
           v-for="provider in unlinkProviders"
@@ -47,14 +36,9 @@
         </Button>
       </div>
     </div>
-    <div class="text-divider">
-      <div></div>
-      <span>or</span>
-      <div></div>
-    </div>
     <template v-if="totpQRImage">
-      <h1>Connect a secondary authentication provider</h1>
-      <img v-bind:src="totpQRImage" :width="totpQRWidth" :height="totpQRHeight" alt="QR Image" />
+      <h2>Connect 2FA</h2>
+      <img :src="totpQRImage" :width="totpQRWidth" :height="totpQRHeight" alt="QR Image" />
       <p>Currently, there is no authenticator app linked to your account.</p>
       <p>
         To add one, scan the QR code with your authenticator app, or enter the following secret
@@ -64,7 +48,7 @@
       <br />
       <p>Confirm your provider by entering the provider's code below:</p>
       <input v-model="totpCode" placeholder="TOTP Code" type="text" />
-      <button @click="linkAuthenticator('link')" class="btn btn-primary continue-btn">
+      <button class="btn btn-primary continue-btn" @click="linkAuthenticator('link')">
         Link authenticator app
       </button>
     </template>
@@ -77,16 +61,10 @@
           require 2FA.
         </p>
       </template>
-      <button @click="linkAuthenticator('unlink')" class="btn btn-primary continue-btn">
+      <button class="btn btn-primary continue-btn" @click="linkAuthenticator('unlink')">
         Unlink authenticator app
       </button>
     </template>
-    <div class="text-divider">
-      <div></div>
-      <span>or</span>
-      <div></div>
-    </div>
-
     <template v-if="lookupCodes.length > 0">
       <div class="totp-codes">
         <p v-for="code in lookupCodes" :key="code">
@@ -100,13 +78,13 @@
         be shown again, so store them in a safe place!
       </p>
 
-      <button @click="generateCodes(true)" class="btn btn-primary continue-btn">
+      <button class="btn btn-primary continue-btn" @click="generateCodes(true)">
         Confirm backup codes
       </button>
     </template>
 
     <template v-if="showLookupRegenerate || showLookupDisable">
-      <button @click="generateCodes(false)" class="btn btn-primary continue-btn">
+      <button class="btn btn-primary continue-btn" @click="generateCodes(false)">
         Regenerate backup codes
       </button>
     </template>
@@ -121,14 +99,15 @@
     </template>
 
     <template v-if="showLookupDisable">
-      <button @click="disableLookupSecrets()" class="btn btn-primary continue-btn">
+      <button class="btn btn-primary continue-btn" @click="disableLookupSecrets()">
         Disable backup codes
       </button>
     </template>
-  </template>
+  </div>
 </template>
 
 <script setup>
+import { Button, GitHubIcon } from 'omorphia'
 import {
   extractNestedCsrfToken,
   extractNestedErrorMessagesFromError,
@@ -137,8 +116,8 @@ import {
   extractNestedTotpData,
   extractOidcLinkProviders,
   extractOidcUnlinkProviders,
+  getOryCookies,
 } from '~/helpers/ory-ui-extract'
-import { Button, GitHubIcon } from 'omorphia'
 import DiscordIcon from '@/assets/discord.svg'
 import GoogleIcon from '@/assets/google.svg'
 import AppleIcon from '@/assets/apple.svg'
@@ -169,14 +148,17 @@ const showLookupDisable = ref(false)
 
 async function updateFlow() {
   try {
-    const r = await $oryConfig.getSettingsFlow({ id: route.query.flow || '' })
+    const r = await $oryConfig.getSettingsFlow({
+      id: route.query.flow || '',
+      cookie: getOryCookies(),
+    })
 
     flowData.value = r.data
     linkProviders.value = extractOidcLinkProviders(r.data)
     unlinkProviders.value = extractOidcUnlinkProviders(r.data)
     oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
 
-    let totp = extractNestedTotpData(r.data)
+    const totp = extractNestedTotpData(r.data)
     if (totp.image && totp.secret) {
       totpQRImage.value = totp.image.src
       totpQRWidth.value = totp.image.width
@@ -189,7 +171,7 @@ async function updateFlow() {
       totpSecret.value = null
     }
 
-    let look = extractNestedLookupCodes(r.data)
+    const look = extractNestedLookupCodes(r.data)
     if (look) {
       lookupCodes.value = look.codes
       showLookupRegenerate.value = look.regenerateButton
@@ -202,7 +184,7 @@ async function updateFlow() {
       if ('data' in e.response && 'redirect_browser_to' in e.response.data) {
         navigateTo(e.response.data.redirect_browser_to, { external: true })
       } else if (e.response.status === 404) {
-        navigateTo(config.oryUrl + '/self-service/settings/browser', { external: true })
+        navigateTo(config.public.oryUrl + '/self-service/settings/browser', { external: true })
       } else {
         navigateTo('/')
       }
@@ -212,9 +194,7 @@ async function updateFlow() {
   }
 }
 
-if (process.client) {
-  await updateFlow()
-}
+await updateFlow()
 
 const icons = {
   discord: DiscordIcon,
@@ -233,13 +213,13 @@ function getIcon(provider) {
   return icons[provider]
 }
 
-async function linkOidc(provider, link_or_unlink) {
-  let updateSettingsFlowBody = {
+async function linkOidc(provider, linkOrUnlink) {
+  const updateSettingsFlowBody = {
     method: 'profile',
     traits: flowData.value.identity.traits,
   }
 
-  if (link_or_unlink == 'link') {
+  if (linkOrUnlink === 'link') {
     updateSettingsFlowBody.link = provider
     await sendUpdate(updateSettingsFlowBody)
   } else {
@@ -250,11 +230,11 @@ async function linkOidc(provider, link_or_unlink) {
 
 // Attempt to link to an authentication app (or unlink if already connected)
 // Should only be able to link to one (if unlink button is displayed, link should not be)
-async function linkAuthenticator(link_or_unlink) {
-  let updateSettingsFlowBody = {
+async function linkAuthenticator(linkOrUnlink) {
+  const updateSettingsFlowBody = {
     method: 'totp',
     totp_code: totpCode.value,
-    totp_unlink: link_or_unlink == 'unlink',
+    totp_unlink: linkOrUnlink === 'unlink',
   }
   await sendUpdate(updateSettingsFlowBody)
 }
@@ -262,8 +242,8 @@ async function linkAuthenticator(link_or_unlink) {
 // Regenerates (or generates) backup codes
 // Previous codes are invalidated
 async function generateCodes(confirm) {
-  let regenerate = !confirm
-  let updateSettingsFlowBody = {
+  const regenerate = !confirm
+  const updateSettingsFlowBody = {
     method: 'lookup',
     lookup_secret_regenerate: regenerate,
     lookup_secret_confirm: confirm,
@@ -278,7 +258,7 @@ async function generateCodes(confirm) {
 // Enables or disables backup codes
 // If enabling, generates a set of codes
 async function disableLookupSecrets() {
-  let updateSettingsFlowBody = {
+  const updateSettingsFlowBody = {
     method: 'lookup',
     lookup_secret_disable: true,
     lookup_secret_regenerate: false,
@@ -293,7 +273,7 @@ async function updatePassword() {
     return
   }
 
-  let updateSettingsFlowBody = {
+  const updateSettingsFlowBody = {
     csrf_token: extractNestedCsrfToken(flowData.value), // must be directly set
     method: 'password',
     password: password.value,
@@ -306,13 +286,12 @@ async function updatePassword() {
 // For different ways to things to change - some lookup value, or password.
 // For example, we use UpdateSettingsFlowWithPasswordMethod to update password
 async function sendUpdate(updateSettingsFlowBody) {
-  let csrf_token = extractNestedCsrfToken(flowData.value) // must be directly set
-  updateSettingsFlowBody.csrf_token = csrf_token
+  updateSettingsFlowBody.csrf_token = extractNestedCsrfToken(flowData.value)
 
   try {
     await $oryConfig.updateSettingsFlow({
       flow: route.query.flow,
-      updateSettingsFlowBody: updateSettingsFlowBody,
+      updateSettingsFlowBody,
     })
     const returnUrl = flowData.value.return_to
     if (returnUrl) {
@@ -330,4 +309,68 @@ async function sendUpdate(updateSettingsFlowBody) {
   }
 }
 </script>
-<style src="~/assets/settings.css"></style>
+<style>
+.third-party-link {
+  justify-content: center;
+  display: grid;
+  gap: var(--gap-md);
+  grid-template-columns: repeat(2, 1fr);
+  width: 100%;
+}
+
+.third-party-link .btn {
+  width: 100%;
+  justify-content: center;
+  vertical-align: middle;
+}
+
+.third-party-link .btn svg {
+  margin-right: var(--gap-sm);
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.totp {
+  vertical-align: middle;
+}
+
+.totp-codes {
+  vertical-align: middle;
+
+  display: grid;
+  gap: var(--gap-md);
+  grid-template-columns: repeat(2, 1fr);
+  width: 100%;
+}
+
+.discord-btn {
+  color: #ffffff;
+  background-color: #5865f2;
+}
+.apple-btn {
+  color: var(--color-accent-contrast);
+  background-color: var(--color-contrast);
+}
+.google-btn {
+  color: #ffffff;
+  background-color: #4285f4;
+}
+.gitlab-btn {
+  color: #ffffff;
+  background-color: #fc6d26;
+}
+.github-btn {
+  color: #ffffff;
+  background-color: #8740f1;
+}
+.microsoft-btn {
+  color: var(--color-accent-contrast);
+  background-color: var(--color-contrast);
+}
+
+@media screen and (max-width: 25.5rem) {
+  .third-party .btn {
+    grid-column: 1 / 3;
+  }
+}
+</style>

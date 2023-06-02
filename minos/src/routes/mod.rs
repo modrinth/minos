@@ -7,7 +7,6 @@ use actix_web_httpauth::middleware::HttpAuthentication;
 use thiserror::Error;
 
 pub mod callback;
-pub mod delete;
 pub mod not_found;
 pub mod user;
 
@@ -33,7 +32,6 @@ pub fn admin_config(cfg: &mut web::ServiceConfig) {
             .service(user::user_get_id_by_token)
             .service(user::user_get_id)
             .service(callback::settings_callback)
-            .service(delete::delete_all)
             .wrap(HttpAuthentication::bearer(
                 crate::auth::middleware::admin_validator,
             )),

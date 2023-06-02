@@ -27,4 +27,8 @@ FROM debian:buster-slim
 # Install the necessary OpenSSL libraries
 RUN apt-get update && apt-get install -y openssl libssl1.1 && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /usr/src/minos/target/release/minos /usr/local/bin/minos
+
+# Copy the configuration files into the image
+COPY minos-configs/ /etc/config/kratos/
+
 CMD ["minos"]

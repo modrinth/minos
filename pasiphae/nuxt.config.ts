@@ -5,7 +5,6 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       oryUrl: process.env.NUXT_ENV_ORY_URL || 'http://127.0.0.1:4433',
-      minosUrl: process.env.NUXT_ENV_MINOS_URL || 'http://127.0.0.1:4000',
       nuxtUrl: process.env.NUXT_ENV_API_URL || 'http://127.0.0.1:4455',
     },
   },

@@ -56,27 +56,8 @@ services:
     environment: 
     - ORY_AUTH_BEARER
     - SENTRY_DSN
-  pasiphae:
-    build: pasiphae
-    # image: ghcr.io/modrinth/pasiphae:staging
-    depends_on:
-      - kratos
-    env_file:
-      - .env
-    ports:
-      - "4455:4455"
     volumes:
       - config-data:/etc/config/kratos
-
-  # kratos-selfservice-ui-node:
-  #   image: oryd/kratos-selfservice-ui-node:v0.13.0
-  #   ports:
-  #   - "4455:4455"
-  #   environment:
-  #     - PORT=4455
-  #     - SECURITY_MODE=
-  #     - KRATOS_PUBLIC_URL=http://kratos:4433
-  #     - KRATOS_BROWSER_URL=http://kratos:4433
 
 volumes:
   config-data:

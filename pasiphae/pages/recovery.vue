@@ -1,5 +1,5 @@
 <template>
-  <template v-if="flowData">
+  <div v-if="flowData" class="page-container">
     <h1>Reset your password</h1>
     <div v-if="oryUiMsgs.length > 0" class="errors">
       <p v-for="oryUiMsg in oryUiMsgs" :key="oryUiMsg">
@@ -11,8 +11,8 @@
         Enter your email below and we'll send a recovery link to allow you to recover your account.
       </p>
       <label for="email" hidden>Email</label>
-      <input v-model="email" id="email" type="text" placeholder="Email" />
-      <button @click="recovery" class="btn btn-primary continue-btn">Send recovery email</button>
+      <input id="email" v-model="email" type="text" placeholder="Email" />
+      <button class="btn btn-primary continue-btn" @click="recovery">Send recovery email</button>
     </template>
     <template v-else-if="flowData.state == 'sent_email'">
       <p>
@@ -21,7 +21,7 @@
       </p>
       <p>Check your email and enter the code from it below.</p>
       <input id="code" v-model="code" type="text" placeholder="Enter code" />
-      <button @click="submitCode" class="btn btn-primary continue-btn">Recover</button>
+      <button class="btn btn-primary continue-btn" @click="submitCode">Recover</button>
     </template>
     <template v-else-if="flowData.state == 'passed_challenge'">
       <p>
@@ -35,7 +35,7 @@
       <input id="confirm-password" type="text" placeholder="Confirm password" />
       <button class="btn btn-primary continue-btn">Reset password</button>
     </template>
-  </template>
+  </div>
 </template>
 
 <script setup>
@@ -43,6 +43,7 @@ import {
   extractNestedCsrfToken,
   extractNestedErrorMessagesFromError,
   extractNestedErrorMessagesFromUiData,
+  getOryCookies,
 } from '~/helpers/ory-ui-extract'
 const { $oryConfig } = useNuxtApp()
 const route = useRoute()
@@ -55,7 +56,7 @@ const code = ref('')
 const flowData = ref(null)
 async function updateFlow() {
   try {
-    const r = await $oryConfig.getRecoveryFlow({ id: route.query.flow })
+    const r = await $oryConfig.getRecoveryFlow({ id: route.query.flow, cookie: getOryCookies() })
 
     flowData.value = r.data
     oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
@@ -66,7 +67,7 @@ async function updateFlow() {
       if ('data' in e.response && 'redirect_browser_to' in e.response.data) {
         navigateTo(e.response.data.redirect_browser_to, { external: true })
       } else if (e.response.status === 404) {
-        navigateTo(config.oryUrl + '/self-service/settings/browser', { external: true })
+        navigateTo(config.public.oryUrl + '/self-service/settings/browser', { external: true })
       } else {
         navigateTo('/')
       }
@@ -75,10 +76,7 @@ async function updateFlow() {
     }
   }
 }
-
-if (process.client) {
-  await updateFlow()
-}
+await updateFlow()
 
 // Send recovery email to the set 'email'
 async function recovery() {

@@ -6,7 +6,7 @@ export default defineNuxtPlugin((_nuxtApp) => {
     provide: {
       oryConfig: new FrontendApi(
         new Configuration({
-          basePath: config.oryUrl,
+          basePath: config.public.oryUrl,
           baseOptions: {
             withCredentials: true, // Ensures we send cookies in the CORS requests.
           },
