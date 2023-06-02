@@ -5,6 +5,7 @@ export function extractNestedErrorMessagesFromError(e) {
   let errs = []
   errs.push({ id: 0, type: 'error', text: JSON.stringify(e) })
 
+  if (!e) return errs
   if (!('response' in e)) return errs
   if (!('data' in e.response)) return errs
   if ('error' in e.response.data) {

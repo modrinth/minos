@@ -3,7 +3,7 @@
     <ul class="json-list">
       <li v-for="(value, key) in oryUiError">
         <b>{{ key }}</b
-        >: <span class="json-value" v-html="formattedValue(value)"></span>
+        >: <span class="json-value" v-html="value"></span>
       </li>
     </ul>
   </div>
@@ -27,22 +27,24 @@
 </style>
 
 <script setup>
-const oryUiError = ref('Loading error...')
+const oryUiError = ref({ code: 'Loading error...' })
 const { $oryConfig } = useNuxtApp()
 const route = useRoute()
-
-try {
-  const r = await $oryConfig.getFlowError({ id: route.query.id })
-  oryUiError.value = r.data.error
-} catch (e) {
-  oryUiError.value = JSON.stringify(e)
-}
 
 const formattedValue = (value) => {
   if (typeof value === 'string') {
     return value.replace(/\\n/g, '<br />').replace(/\\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;')
   } else {
     return value
+  }
+}
+
+if (process.client) {
+  try {
+    const r = await $oryConfig.getFlowError({ id: route.query.id })
+    oryUiError.value = formattedValue(r.data.error)
+  } catch (e) {
+    oryUiError.value = JSON.stringify(e)
   }
 }
 </script>

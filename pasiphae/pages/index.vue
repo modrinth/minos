@@ -43,16 +43,18 @@ const logoutUrl = ref(null)
 
 // Fetch the session directly from Ory
 // Authentication is successful if cookie represents a valid Ory Session
-try {
-  const data = await app.$oryConfig.toSession()
-  session.value = data
+if (process.client) {
+  try {
+    const data = await app.$oryConfig.toSession()
+    session.value = data
 
-  const logout_data = await app.$oryConfig.createBrowserLogoutFlow()
-  logoutUrl.value = logout_data.logout_url
-} catch (e) {
-  if ((e.response && e.response.status === 404) || e.response.status === 403) {
-    // 403 likely means another level of auth is needed- either way, reauthenticate with a new flow
-    navigateTo(config.oryUrl + '/self-service/login/browser?aal=aal2', { external: true })
+    const logout_data = await app.$oryConfig.createBrowserLogoutFlow()
+    logoutUrl.value = logout_data.logout_url
+  } catch (e) {
+    if (e.response && (e.response.status === 404 || e.response.status === 403)) {
+      // 403 likely means another level of auth is needed- either way, reauthenticate with a new flow
+      navigateTo(config.oryUrl + '/self-service/login/browser?aal=aal2', { external: true })
+    }
   }
 }
 </script>

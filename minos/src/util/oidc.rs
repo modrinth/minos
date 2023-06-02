@@ -8,12 +8,11 @@ use serde::{Deserialize, Serialize};
 use sqlx::pool;
 
 use crate::{
-    database::models::{
-        labrinth::LabrinthUser,
-        webhook::{OryMessage, OryWebhookMessagePacket, OryWebhookPayload},
-    },
+    database::models::labrinth::LabrinthUser,
     routes::{user::MinosSessionMetadataPublic, ApiError, OryError},
 };
+
+use super::callback::CallbackError;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Payload {
@@ -40,11 +39,10 @@ pub async fn oidc_reload(
     configuration: &Configuration,
 ) -> Result<actix_web::HttpResponse, ApiError> {
     // Get the oidc data from database
-    let err = || OryError::MissingIdentityData("OIDC".to_string());
     let credentials = identity_with_credentials
         .credentials
         .clone()
-        .ok_or_else(err)?;
+        .ok_or_else(|| OryError::MissingIdentityData("credentials".to_string()))?;
 
     // If there is no OIDC data, that's fine. Just return
     let oidc_data = match credentials.get("oidc") {
@@ -52,8 +50,12 @@ pub async fn oidc_reload(
         None => return Ok(HttpResponse::Ok().json(identity_with_credentials)),
     };
 
-    let oidc_data: OidcDataConfig =
-        serde_json::from_value(oidc_data.config.clone().ok_or_else(err)?)?;
+    let oidc_data: OidcDataConfig = serde_json::from_value(
+        oidc_data
+            .config
+            .clone()
+            .ok_or_else(|| OryError::MissingIdentityData("oidc".to_string()))?,
+    )?;
     let providers = oidc_data.providers;
     let get_new_provider_id = |p: String| {
         providers
@@ -62,13 +64,12 @@ pub async fn oidc_reload(
             .map(|x| x.subject.clone())
     };
     // Overwite into current metadata_public
-    let metadata_public: MinosSessionMetadataPublic = serde_json::from_value(
-        identity_with_credentials
-            .metadata_public
-            .clone()
-            .ok_or_else(|| OryError::MissingIdentityData("OIDC".to_string()))?,
-    )?;
-
+    let metadata_public = identity_with_credentials.metadata_public.clone();
+    let metadata_public: MinosSessionMetadataPublic = if let Some(m) = metadata_public {
+        serde_json::from_value(m)?
+    } else {
+        MinosSessionMetadataPublic::default()
+    };
     // If we are ADDING a github field and it is not already set,
     // We need to specifically check if a legacy account exists, as we only allow
     // legacy github account linking through *registration*, not through the settings flow
@@ -80,20 +81,12 @@ pub async fn oidc_reload(
         // Directly remove the github OIDC just added from the db directly
         // Must use direct replacement as patching is not supported for credentials
         remove_github_credentials(&identity_with_credentials.id, pool).await?;
-        return Ok(HttpResponse::BadRequest().json(OryWebhookPayload {
-            messages: vec![
-                OryWebhookMessagePacket {
-                    instance_ptr: "github".to_string(),
-                    messages: vec![
-                        OryMessage {
-                            id: 0,
-                            text: "This Github account is already linked to an existing legacy Modrinth account. Make a new account with that Github OIDC to gain access to it, rather than merging this account.".to_string(),
-                            r#type: "collision".to_string(),
-                            context: None
-                        }
-                    ]
-                }
-            ]
+        return Ok(HttpResponse::from_error(CallbackError {
+            name: "github".to_string(),
+            id: 0,
+            text: "This Github account is already linked to an existing legacy Modrinth account. Make a new account with that Github OIDC to gain access to it, rather than merging this account.".to_string(),
+            r#type: "collision".to_string(),
+            status_code: actix_web::http::StatusCode::BAD_REQUEST,
         }));
     }
 

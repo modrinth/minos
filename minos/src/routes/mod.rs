@@ -77,19 +77,25 @@ impl actix_web::ResponseError for ApiError {
     }
     fn error_response(&self) -> actix_web::HttpResponse {
         actix_web::HttpResponse::build(self.status_code()).json(crate::error::ApiError {
-            error: match self {
-                ApiError::Env(..) => "environment_error",
-                ApiError::Json(..) => "invalid_input",
-                ApiError::ParseInt(..) => "invalid_input",
-                ApiError::Ory(..) => "invalid_input",
-                ApiError::SessionError => "internal_error",
-                ApiError::Reqwest(..) => "internal_error",
-                ApiError::Unauthorized(..) => "unauthorized",
-                ApiError::ParseUuid(..) => "invalid_input",
-                ApiError::Database(..) => "internal_error",
-            },
+            error: self.get_error_response(),
             description: &self.to_string(),
         })
+    }
+}
+
+impl ApiError {
+    pub fn get_error_response(&self) -> &str {
+        match self {
+            ApiError::Env(..) => "environment_error",
+            ApiError::Json(..) => "invalid_input",
+            ApiError::ParseInt(..) => "invalid_input",
+            ApiError::Ory(..) => "invalid_input",
+            ApiError::SessionError => "internal_error",
+            ApiError::Reqwest(..) => "internal_error",
+            ApiError::Unauthorized(..) => "unauthorized",
+            ApiError::ParseUuid(..) => "invalid_input",
+            ApiError::Database(..) => "internal_error",
+        }
     }
 }
 

@@ -56,9 +56,7 @@
           "maxLength": 320
         }
       },
-      "required": [
-        "email", "username"
-      ],
+      "required": ["email", "username"],
       "additionalProperties": false
     }
   }

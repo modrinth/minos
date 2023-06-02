@@ -56,7 +56,7 @@ const code = ref(route.query.code ?? '')
 const flowData = ref(null)
 async function updateFlow() {
   try {
-    const r = $oryConfig.getVerificationFlow({ id: route.query.flow || '' })
+    const r = await $oryConfig.getVerificationFlow({ id: route.query.flow || '' })
     flowData.value = r.data
     oryUiMsgs.value = extractNestedErrorMessagesFromUiData(flowData.value)
 
@@ -75,16 +75,23 @@ async function updateFlow() {
   } catch (e) {
     // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
     // Any other error we just leave the page
-    if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
-      navigateTo(e.response.data.redirect_browser_to, { external: true })
-    } else if (e.response.status === 404) {
-      navigateTo(config.oryUrl + '/self-service/settings/browser', { external: true })
+    if (e && 'response' in e) {
+      if ('data' in e.response && 'redirect_browser_to' in e.response.data) {
+        navigateTo(e.response.data.redirect_browser_to, { external: true })
+      } else if (e.response.status === 404) {
+        navigateTo(config.oryUrl + '/self-service/settings/browser', { external: true })
+      } else {
+        navigateTo('/')
+      }
     } else {
-      navigateTo('')
+      navigateTo('/')
     }
   }
 }
-await updateFlow()
+
+if (process.client) {
+  await updateFlow()
+}
 
 // Attempts to verify an account with the given 'code' (sent to an email with the registration flow)
 async function verify() {

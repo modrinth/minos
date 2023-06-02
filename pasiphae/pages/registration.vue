@@ -69,20 +69,26 @@ const confirmPassword = ref('')
 const flowData = ref(null)
 const providers = ref([])
 
-try {
-  const r = $oryConfig.getRegistrationFlow({ id: route.query.flow || '' })
-  flowData.value = r.data
-  providers.value = extractOidcProviders(r.data)
-  oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
-} catch (e) {
-  // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
-  // Any other error we just leave the page
-  if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
-    navigateTo(e.response.data.redirect_browser_to, { external: true })
-  } else if ('response' in e && e.response.status === 404) {
-    navigateTo(config.oryUrl + '/self-service/registration/browser', { external: true })
-  } else {
-    navigateTo('/')
+if (process.client) {
+  try {
+    const r = await $oryConfig.getRegistrationFlow({ id: route.query.flow || '' })
+    flowData.value = r.data
+    providers.value = extractOidcProviders(r.data)
+    oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
+  } catch (e) {
+    // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
+    // Any other error we just leave the page
+    if (e && 'response' in e) {
+      if ('data' in e.response && 'redirect_browser_to' in e.response.data) {
+        navigateTo(e.response.data.redirect_browser_to, { external: true })
+      } else if (e.response.status === 404) {
+        navigateTo(config.oryUrl + '/self-service/settings/browser', { external: true })
+      } else {
+        navigateTo('/')
+      }
+    } else {
+      navigateTo('/')
+    }
   }
 }
 
@@ -153,7 +159,7 @@ async function registerGeneric(registrationFlowBody) {
     // Using Social-integrated login/registration will return a 422: Unprocessable Entity error with a redirection link.
     // We use this to continue the flow.
     // (TODO: this is weird, is this a bug?)
-    if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
+    if (e && 'response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
       navigateTo(e.response.data.redirect_browser_to, { external: true })
       return
     }

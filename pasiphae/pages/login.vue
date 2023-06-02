@@ -109,9 +109,9 @@ async function updateFlow() {
       logoutUrl.value = data.logout_url
     }
   } catch (e) {
-    if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
+    if (e && 'response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
       navigateTo(e.response.data.redirect_browser_to, { external: true })
-    } else if ((e.response && e.response.status === 404) || e.response.status === 403) {
+    } else if (e.response && (e.response.status === 404 || e.response.status === 403)) {
       // 403 likely means another level of auth is needed- either way, reauthenticate with a new flow
       navigateTo(config.oryUrl + '/self-service/login/browser', { external: true })
     } else {
@@ -119,7 +119,9 @@ async function updateFlow() {
     }
   }
 }
-await updateFlow()
+if (process.client) {
+  await updateFlow()
+}
 
 const icons = {
   discord: DiscordIcon,
@@ -191,7 +193,7 @@ async function sendUpdate(loginFlowBody) {
     const returnUrl = flowData.value.return_to || config.nuxtUrl
     navigateTo(returnUrl, { external: true })
   } catch (e) {
-    if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
+    if (e && 'response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
       navigateTo(e.response.data.redirect_browser_to, { external: true })
     } else {
       // Get displayable error messsages from nested returned Ory UI elements

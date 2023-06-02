@@ -4,12 +4,11 @@ services:
     image: oryd/kratos:v0.13.0
     environment:
       - DSN=${DATABASE_URL}
-    volumes:
-      - type: bind
-        source: ./minos-configs
-        target: /etc/config/kratos
     entrypoint: /bin/sh -c "/usr/bin/kratos -c /etc/config/kratos/${KRATOS_YML} migrate sql -e --yes >/dev/null 2>&1"
     restart: on-failure
+    volumes:
+      - config-data:/etc/config/kratos
+
   kratos:
     depends_on:
       - kratos-migrate
@@ -45,9 +44,8 @@ services:
     restart: unless-stopped
     command: serve -c /etc/config/kratos/${KRATOS_YML} --dev --watch-courier
     volumes:
-      - type: bind
-        source: ./minos-configs
-        target: /etc/config/kratos
+      - config-data:/etc/config/kratos
+        
   minos:
     build: minos
     # image: ghcr.io/modrinth/minos:staging
@@ -61,10 +59,15 @@ services:
   pasiphae:
     build: pasiphae
     # image: ghcr.io/modrinth/pasiphae:staging
+    depends_on:
+      - kratos
     env_file:
       - .env
     ports:
       - "4455:4455"
+    volumes:
+      - config-data:/etc/config/kratos
+
   # kratos-selfservice-ui-node:
   #   image: oryd/kratos-selfservice-ui-node:v0.13.0
   #   ports:
@@ -73,4 +76,7 @@ services:
   #     - PORT=4455
   #     - SECURITY_MODE=
   #     - KRATOS_PUBLIC_URL=http://kratos:4433
-  #     - KRATOS_BROWSER_URL=http://127.0.0.1:4433
+  #     - KRATOS_BROWSER_URL=http://kratos:4433
+
+volumes:
+  config-data:

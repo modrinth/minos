@@ -6,7 +6,7 @@ use sqlx::pool;
 
 use crate::{
     routes::{ApiError, OryError},
-    util::oidc,
+    util::{callback::CallbackError, oidc},
 };
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -24,19 +24,15 @@ pub async fn settings_callback(
     payload: web::Json<Payload>,
     pool: web::Data<pool::Pool<sqlx::Postgres>>,
     configuration: web::Data<Configuration>,
-) -> Result<actix_web::HttpResponse, ApiError> {
+) -> Result<actix_web::HttpResponse, CallbackError> {
     let identity_with_credentials = ory_client::apis::identity_api::get_identity(
         &configuration,
         &payload.identity_id,
         Some(vec!["oidc".to_string()]),
     )
     .await
-    .map_err(OryError::from)?;
-
-    println!(
-        "Got identity with credentials: {:?}",
-        serde_json::to_string(&identity_with_credentials)?
-    );
+    .map_err(OryError::from)
+    .map_err(ApiError::from)?;
 
     // Handle OIDC:
     oidc::oidc_reload(&identity_with_credentials, &pool, &configuration).await?;
