@@ -6,9 +6,8 @@ use actix_web::web;
 use actix_web_httpauth::middleware::HttpAuthentication;
 use thiserror::Error;
 
-pub mod delete;
+pub mod callback;
 pub mod not_found;
-pub mod oidc;
 pub mod user;
 
 pub use not_found::not_found;
@@ -32,8 +31,7 @@ pub fn admin_config(cfg: &mut web::ServiceConfig) {
         web::scope("admin")
             .service(user::user_get_id_by_token)
             .service(user::user_get_id)
-            .service(oidc::oidc_reload)
-            .service(delete::delete_all)
+            .service(callback::settings_callback)
             .wrap(HttpAuthentication::bearer(
                 crate::auth::middleware::admin_validator,
             )),
@@ -78,19 +76,25 @@ impl actix_web::ResponseError for ApiError {
     }
     fn error_response(&self) -> actix_web::HttpResponse {
         actix_web::HttpResponse::build(self.status_code()).json(crate::error::ApiError {
-            error: match self {
-                ApiError::Env(..) => "environment_error",
-                ApiError::Json(..) => "invalid_input",
-                ApiError::ParseInt(..) => "invalid_input",
-                ApiError::Ory(..) => "invalid_input",
-                ApiError::SessionError => "internal_error",
-                ApiError::Reqwest(..) => "internal_error",
-                ApiError::Unauthorized(..) => "unauthorized",
-                ApiError::ParseUuid(..) => "invalid_input",
-                ApiError::Database(..) => "internal_error",
-            },
+            error: self.get_error_response(),
             description: &self.to_string(),
         })
+    }
+}
+
+impl ApiError {
+    pub fn get_error_response(&self) -> &str {
+        match self {
+            ApiError::Env(..) => "environment_error",
+            ApiError::Json(..) => "invalid_input",
+            ApiError::ParseInt(..) => "invalid_input",
+            ApiError::Ory(..) => "invalid_input",
+            ApiError::SessionError => "internal_error",
+            ApiError::Reqwest(..) => "internal_error",
+            ApiError::Unauthorized(..) => "unauthorized",
+            ApiError::ParseUuid(..) => "invalid_input",
+            ApiError::Database(..) => "internal_error",
+        }
     }
 }
 
@@ -114,6 +118,11 @@ pub enum OryError {
     #[error("Update Identity error: {0}")]
     UpdateIdentityError(
         #[from] ory_client::apis::Error<ory_client::apis::identity_api::UpdateIdentityError>,
+    ),
+    #[error("Delete Identity Credentials error: {0}")]
+    DeleteIdentityCredentialsError(
+        #[from]
+        ory_client::apis::Error<ory_client::apis::identity_api::DeleteIdentityCredentialsError>,
     ),
     #[error("List Identity error: {0}")]
     ListIdentitiesError(

@@ -4,12 +4,11 @@ services:
     image: oryd/kratos:v0.13.0
     environment:
       - DSN=${DATABASE_URL}
-    volumes:
-      - type: bind
-        source: ./minos-configs
-        target: /etc/config/kratos
     entrypoint: /bin/sh -c "/usr/bin/kratos -c /etc/config/kratos/${KRATOS_YML} migrate sql -e --yes >/dev/null 2>&1"
     restart: on-failure
+    volumes:
+      - config-data:/etc/config/kratos
+
   kratos:
     depends_on:
       - kratos-migrate
@@ -45,9 +44,8 @@ services:
     restart: unless-stopped
     command: serve -c /etc/config/kratos/${KRATOS_YML} --dev --watch-courier
     volumes:
-      - type: bind
-        source: ./minos-configs
-        target: /etc/config/kratos
+      - config-data:/etc/config/kratos
+        
   minos:
     build: minos
     # image: ghcr.io/modrinth/minos:staging
@@ -58,10 +56,8 @@ services:
     environment: 
     - ORY_AUTH_BEARER
     - SENTRY_DSN
-  pasiphae:
-    build: pasiphae
-    # image: ghcr.io/modrinth/pasiphae:staging
-    env_file:
-      - .env
-    ports:
-      - "4455:4455"
+    volumes:
+      - config-data:/etc/config/kratos
+
+volumes:
+  config-data:

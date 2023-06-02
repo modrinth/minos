@@ -1,38 +1,36 @@
-<template>
-  <template v-if="flowData">
-    <template v-if="flowData.state == 'sent_email'">
-      <h1>Verify your email</h1>
-      <div v-if="oryUiMsgs.length > 0" class="errors">
-        <p v-for="oryUiMsg in oryUiMsgs" :key="oryUiMsg">
-          {{ oryUiMsg.text }}
-        </p>
-      </div>
-      <p>Enter the code sent to your email to verify it.</p>
-      <input v-model="code" placeholder="Enter code" type="text" />
-      <button @click="verify" class="btn btn-primary continue-btn">Verify Email</button>
-      <p><a class="text-link" :href="recoverFlowEndpoint" data-testid="sign-in">Resend email</a></p>
-    </template>
-    <template v-if="flowData.state == 'choose_method'">
-      <h1>Verify your email</h1>
-      <div v-if="oryUiMsgs.length > 0" class="errors">
-        <p v-for="oryUiMsg in oryUiMsgs" :key="oryUiMsg">
-          {{ oryUiMsg.text }}
-        </p>
-      </div>
-      <p>Enter the email you want to verify.</p>
-      <input v-model="code" placeholder="Enter email" type="text" />
-      <button @click="verify" class="btn btn-primary continue-btn">Send code</button>
-    </template>
-    <template v-if="flowData.state == 'passed_challenge'">
-      <h1>Successfully verified email.</h1>
-      <div v-if="oryUiMsgs.length > 0" class="errors">
-        <p v-for="oryUiMsg in oryUiMsgs" :key="oryUiMsg">
-          {{ oryUiMsg.text }}
-        </p>
-      </div>
-      <p><a class="text-link" :href="homeEndpoint" data-testid="sign-in">Return to home page</a></p>
-    </template>
-  </template>
+<template v-if="flowData">
+  <div v-if="flowData.state === 'sent_email'" class="page-container">
+    <h1>Verify your email</h1>
+    <div v-if="oryUiMsgs.length > 0" class="errors">
+      <p v-for="oryUiMsg in oryUiMsgs" :key="oryUiMsg">
+        {{ oryUiMsg.text }}
+      </p>
+    </div>
+    <p>Enter the code sent to your email to verify it.</p>
+    <input v-model="code" placeholder="Enter code" type="text" />
+    <button class="btn btn-primary continue-btn" @click="verify">Verify Email</button>
+    <p><a class="text-link" :href="recoverFlowEndpoint" data-testid="sign-in">Resend email</a></p>
+  </div>
+  <div v-else-if="flowData.state === 'choose_method'" class="page-container">
+    <h1>Verify your email</h1>
+    <div v-if="oryUiMsgs.length > 0" class="errors">
+      <p v-for="oryUiMsg in oryUiMsgs" :key="oryUiMsg">
+        {{ oryUiMsg.text }}
+      </p>
+    </div>
+    <p>Enter the email you want to verify.</p>
+    <input v-model="code" placeholder="Enter email" type="text" />
+    <button class="btn btn-primary continue-btn" @click="verify">Send code</button>
+  </div>
+  <div v-else-if="flowData.state === 'passed_challenge'" class="page-container">
+    <h1>Successfully verified email.</h1>
+    <div v-if="oryUiMsgs.length > 0" class="errors">
+      <p v-for="oryUiMsg in oryUiMsgs" :key="oryUiMsg">
+        {{ oryUiMsg.text }}
+      </p>
+    </div>
+    <p><a class="text-link" :href="homeEndpoint" data-testid="sign-in">Return to home page</a></p>
+  </div>
 </template>
 
 <script setup>
@@ -40,14 +38,15 @@ import {
   extractNestedCsrfToken,
   extractNestedErrorMessagesFromUiData,
   extractNestedErrorMessagesFromError,
+  getOryCookies,
 } from '~/helpers/ory-ui-extract'
 
 const { $oryConfig } = useNuxtApp()
 const route = useRoute()
 
 const config = useRuntimeConfig()
-const homeEndpoint = ref(config.nuxtUrl)
-const recoverFlowEndpoint = ref(config.oryUrl + '/self-service/verification/browser')
+const homeEndpoint = ref(config.public.nuxtUrl)
+const recoverFlowEndpoint = ref(config.public.oryUrl + '/self-service/verification/browser')
 
 const oryUiMsgs = ref([])
 const code = ref(route.query.code ?? '')
@@ -56,9 +55,10 @@ const code = ref(route.query.code ?? '')
 const flowData = ref(null)
 async function updateFlow() {
   try {
-    const r = await $oryConfig
-        .getVerificationFlow({ id: route.query.flow || '' })
-
+    const r = await $oryConfig.getVerificationFlow({
+      id: route.query.flow || '',
+      cookie: getOryCookies(),
+    })
     flowData.value = r.data
     oryUiMsgs.value = extractNestedErrorMessagesFromUiData(flowData.value)
 
@@ -75,16 +75,22 @@ async function updateFlow() {
       }
     }
   } catch (e) {
-    if ('response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
-      navigateTo(e.response.data.redirect_browser_to, { external: true })
-    } else if (e.response.status === 404) {
-      navigateTo(config.oryUrl + '/self-service/settings/browser', { external: true })
+    // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
+    // Any other error we just leave the page
+    if (e && 'response' in e) {
+      if ('data' in e.response && 'redirect_browser_to' in e.response.data) {
+        navigateTo(e.response.data.redirect_browser_to, { external: true })
+      } else if (e.response.status === 404) {
+        navigateTo(config.public.oryUrl + '/self-service/settings/browser', { external: true })
+      } else {
+        navigateTo('/')
+      }
     } else {
-      navigateTo('')
+      navigateTo('/')
     }
   }
 }
-updateFlow()
+await updateFlow()
 
 // Attempts to verify an account with the given 'code' (sent to an email with the registration flow)
 async function verify() {
@@ -105,20 +111,19 @@ async function verify() {
       email: code.value,
     }
   }
-  // updateVerificationFlow, submitting and checking with verification code
-  await $oryConfig
-    .updateVerificationFlow({
+
+  try {
+    const r = await $oryConfig.updateVerificationFlow({
       flow: route.query.flow,
       updateVerificationFlowBody: body,
     })
-    .then((r) => {
-      oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
-      // Success!
-      updateFlow()
-    })
-    .catch((e) => {
-      // Get displayable error messsages from nested returned Ory UI elements
-      oryUiMsgs.value = extractNestedErrorMessagesFromError(e)
-    })
+    oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
+    // Success!
+    await updateFlow()
+  } catch (e) {
+    // updateVerificationFlow, submitting and checking with verification code
+    // Get displayable error messsages from nested returned Ory UI elements
+    oryUiMsgs.value = extractNestedErrorMessagesFromError(e)
+  }
 }
 </script>

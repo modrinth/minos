@@ -1,19 +1,18 @@
-use actix_web::{web, HttpResponse};
+use actix_web::HttpResponse;
 use ory_client::{
     apis::configuration::Configuration,
-    models::{json_patch::OpEnum, JsonPatch},
+    models::{json_patch::OpEnum, Identity, JsonPatch},
 };
 use serde::{Deserialize, Serialize};
 
 use sqlx::pool;
 
 use crate::{
-    database::models::{
-        labrinth::LabrinthUser,
-        webhook::{OryMessage, OryWebhookMessagePacket, OryWebhookPayload},
-    },
+    database::models::labrinth::LabrinthUser,
     routes::{user::MinosSessionMetadataPublic, ApiError, OryError},
 };
+
+use super::callback::CallbackError;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Payload {
@@ -31,28 +30,19 @@ pub struct OidcDataProvider {
     initial_access_token: String,
     initial_refresh_token: String,
 }
-// POST /admin/settings-callback
+
 // Updates the OIDC data for an identity with the latest data from the OIDC provider
 // Used as a callback after the settings flow- designed to directly interface with Ory Kratos
-#[actix_web::post("settings-callback")]
 pub async fn oidc_reload(
-    payload: web::Json<Payload>,
-    pool: web::Data<pool::Pool<sqlx::Postgres>>,
-    configuration: web::Data<Configuration>,
+    identity_with_credentials: &Identity,
+    pool: &pool::Pool<sqlx::Postgres>,
+    configuration: &Configuration,
 ) -> Result<actix_web::HttpResponse, ApiError> {
     // Get the oidc data from database
-    let identity_with_credentials = ory_client::apis::identity_api::get_identity(
-        &configuration,
-        &payload.identity_id,
-        Some(vec!["oidc".to_string()]),
-    )
-    .await
-    .map_err(OryError::from)?;
-    let err = || OryError::MissingIdentityData("OIDC".to_string());
     let credentials = identity_with_credentials
         .credentials
         .clone()
-        .ok_or_else(err)?;
+        .ok_or_else(|| OryError::MissingIdentityData("credentials".to_string()))?;
 
     // If there is no OIDC data, that's fine. Just return
     let oidc_data = match credentials.get("oidc") {
@@ -60,8 +50,12 @@ pub async fn oidc_reload(
         None => return Ok(HttpResponse::Ok().json(identity_with_credentials)),
     };
 
-    let oidc_data: OidcDataConfig =
-        serde_json::from_value(oidc_data.config.clone().ok_or_else(err)?)?;
+    let oidc_data: OidcDataConfig = serde_json::from_value(
+        oidc_data
+            .config
+            .clone()
+            .ok_or_else(|| OryError::MissingIdentityData("oidc".to_string()))?,
+    )?;
     let providers = oidc_data.providers;
     let get_new_provider_id = |p: String| {
         providers
@@ -70,13 +64,12 @@ pub async fn oidc_reload(
             .map(|x| x.subject.clone())
     };
     // Overwite into current metadata_public
-    let metadata_public: MinosSessionMetadataPublic = serde_json::from_value(
-        identity_with_credentials
-            .metadata_public
-            .clone()
-            .ok_or_else(|| OryError::MissingIdentityData("OIDC".to_string()))?,
-    )?;
-
+    let metadata_public = identity_with_credentials.metadata_public.clone();
+    let metadata_public: MinosSessionMetadataPublic = if let Some(m) = metadata_public {
+        serde_json::from_value(m)?
+    } else {
+        MinosSessionMetadataPublic::default()
+    };
     // If we are ADDING a github field and it is not already set,
     // We need to specifically check if a legacy account exists, as we only allow
     // legacy github account linking through *registration*, not through the settings flow
@@ -87,21 +80,13 @@ pub async fn oidc_reload(
     {
         // Directly remove the github OIDC just added from the db directly
         // Must use direct replacement as patching is not supported for credentials
-        remove_github_credentials(&identity_with_credentials.id, &pool).await?;
-        return Ok(HttpResponse::BadRequest().json(OryWebhookPayload {
-            messages: vec![
-                OryWebhookMessagePacket {
-                    instance_ptr: "github".to_string(),
-                    messages: vec![
-                        OryMessage {
-                            id: 0,
-                            text: "This Github account is already linked to an existing legacy Modrinth account. Make a new account with that Github OIDC to gain access to it, rather than merging this account.".to_string(),
-                            r#type: "collision".to_string(),
-                            context: None
-                        }
-                    ]
-                }
-            ]
+        remove_github_credentials(&identity_with_credentials.id, pool).await?;
+        return Ok(HttpResponse::from_error(CallbackError {
+            name: "github".to_string(),
+            id: 0,
+            text: "This Github account is already linked to an existing legacy Modrinth account. Make a new account with that Github OIDC to gain access to it, rather than merging this account.".to_string(),
+            r#type: "collision".to_string(),
+            status_code: actix_web::http::StatusCode::BAD_REQUEST,
         }));
     }
 
@@ -126,8 +111,8 @@ pub async fn oidc_reload(
         value: Some(serde_json::to_value(metadata_public)?),
     };
     ory_client::apis::identity_api::patch_identity(
-        &configuration,
-        &payload.identity_id,
+        configuration,
+        &identity_with_credentials.id,
         Some(vec![json_patch]),
     )
     .await
@@ -135,8 +120,8 @@ pub async fn oidc_reload(
 
     // New identity_with_credentials
     let identity_with_credentials = ory_client::apis::identity_api::get_identity(
-        &configuration,
-        &payload.identity_id,
+        configuration,
+        &identity_with_credentials.id,
         Some(vec!["oidc".to_string()]),
     )
     .await

@@ -16,10 +16,19 @@ html {
   padding: var(--gap-xl);
   background-color: var(--color-raised-bg);
   border-radius: var(--radius-lg);
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .app h1 {
   font-size: 1.75rem;
+  font-weight: 500;
+  margin: 0;
+  color: var(--color-contrast);
+}
+
+.app h2 {
+  font-size: 1.25rem;
   font-weight: 500;
   margin: 0;
   color: var(--color-contrast);
@@ -87,4 +96,10 @@ button.checkbox {
   background-color: var(--color-button-bg);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-inset-sm), 0 0 0 0 transparent;
+}
+
+.page-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
 }

@@ -17,6 +17,18 @@
   height: 1.25rem;
 }
 
+.totp {
+  justify-content: center;
+}
+
+.totp-codes {
+  justify-content: center;
+  display: grid;
+  gap: var(--gap-md);
+  grid-template-columns: repeat(2, 1fr);
+  width: 100%;
+}
+
 .discord-btn {
   color: #ffffff;
   background-color: #5865f2;

@@ -2,9 +2,10 @@
 // (Original ORY setup provides UI 'nodes' they want used)
 // }
 export function extractNestedErrorMessagesFromError(e) {
-  let errs = []
+  const errs = []
   errs.push({ id: 0, type: 'error', text: JSON.stringify(e) })
 
+  if (!e) return errs
   if (!('response' in e)) return errs
   if (!('data' in e.response)) return errs
   if ('error' in e.response.data) {
@@ -76,36 +77,103 @@ export function extractNestedCsrfToken(data) {
 
 // Extracts providers from ORY UI nodes
 // labeled with 'provider' attribute
-const preferred_order = ['github', 'discord', 'google', 'apple', 'microsoft', 'gitlab']
+const preferredOrder = ['github', 'discord', 'google', 'apple', 'microsoft', 'gitlab']
 export function extractOidcProviders(data) {
-  let providers = []
+  const providers = []
   const returnedNodes = data.ui.nodes
   for (let i = 0; i < returnedNodes.length; i++) {
     if (returnedNodes[i].group === 'oidc' && returnedNodes[i].attributes.name === 'provider') {
       providers.push(returnedNodes[i].attributes.value)
     }
   }
-  return providers.sort((a, b) => preferred_order.indexOf(a) - preferred_order.indexOf(b))
+  return providers.sort((a, b) => preferredOrder.indexOf(a) - preferredOrder.indexOf(b))
 }
 // labeled with 'link' attribute
 export function extractOidcLinkProviders(data) {
-  let providers = []
+  const providers = []
   const returnedNodes = data.ui.nodes
   for (let i = 0; i < returnedNodes.length; i++) {
     if (returnedNodes[i].group === 'oidc' && returnedNodes[i].attributes.name === 'link') {
       providers.push(returnedNodes[i].attributes.value)
     }
   }
-  return providers.sort((a, b) => preferred_order.indexOf(a) - preferred_order.indexOf(b))
+  return providers.sort((a, b) => preferredOrder.indexOf(a) - preferredOrder.indexOf(b))
 }
 // labeled with 'unlink' attribute
 export function extractOidcUnlinkProviders(data) {
-  let providers = []
+  const providers = []
   const returnedNodes = data.ui.nodes
   for (let i = 0; i < returnedNodes.length; i++) {
     if (returnedNodes[i].group === 'oidc' && returnedNodes[i].attributes.name === 'unlink') {
       providers.push(returnedNodes[i].attributes.value)
     }
   }
-  return providers.sort((a, b) => preferred_order.indexOf(a) - preferred_order.indexOf(b))
+  return providers.sort((a, b) => preferredOrder.indexOf(a) - preferredOrder.indexOf(b))
+}
+
+// Returns nested TOTP image and secret
+// Return object:
+// {
+//    image: {
+//        src: <base64 encoded image>
+//        width: <width>
+//        height: <height>
+//    }
+//    secret: <secret>
+// }
+export function extractNestedTotpData(data) {
+  const returnedNodes = data.ui.nodes
+  let image = null
+  let secret = null
+  for (let i = 0; i < returnedNodes.length; i++) {
+    if (returnedNodes[i].group === 'totp') {
+      if (returnedNodes[i].attributes.id === 'totp_qr') {
+        image = {
+          src: returnedNodes[i].attributes.src,
+          width: returnedNodes[i].attributes.width,
+          height: returnedNodes[i].attributes.height,
+        }
+      }
+      if (returnedNodes[i].attributes.id === 'totp_secret_key') {
+        secret = returnedNodes[i].attributes.text.text
+      }
+    }
+  }
+  return { image, secret }
+}
+
+// Returns nested lookup codes if they happen to be there
+// {
+//  enabled: <true/false> (whether lookup codes are currently enabled)
+//  codes: [ <code>, <code>, ... ]
+// }
+export function extractNestedLookupCodes(data) {
+  const returnedNodes = data.ui.nodes
+  const codes = []
+  let regenerateButton = false
+  let disableButton = false
+
+  for (let i = 0; i < returnedNodes.length; i++) {
+    if (returnedNodes[i].group === 'lookup_secret') {
+      if (returnedNodes[i].attributes.id === 'lookup_secret_codes') {
+        // atributes.text.text returns comma separated list of codes, but we want them as an array
+        // as we may want to format them differently
+        for (const s of returnedNodes[i].attributes.text.context.secrets) {
+          codes.push(s.text)
+        }
+      }
+      if (returnedNodes[i].attributes.name === 'lookup_secret_regenerate') {
+        regenerateButton = true
+      }
+      if (returnedNodes[i].attributes.name === 'lookup_secret_disable') {
+        disableButton = true
+      }
+    }
+  }
+  return { codes, regenerateButton, disableButton }
+}
+
+export function getOryCookies() {
+  const event = useRequestEvent()
+  return process.server ? event.node.req.headers.cookie : document.cookie
 }
