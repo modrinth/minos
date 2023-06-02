@@ -100,6 +100,13 @@ pub async fn oidc_reload(
         default_picture: metadata_public.default_picture,
     };
 
+    // Labrinth needs to have a record of github IDs, so we send an udpate to labrinth
+    update_github_id(
+        &identity_with_credentials.id,
+        metadata_public.github_id.clone(),
+    )
+    .await?;
+
     // Save OIDC data back as metadata in the identity
     let json_patch = JsonPatch {
         from: Some("/metdata_public".to_string()),
@@ -107,6 +114,7 @@ pub async fn oidc_reload(
         path: "/metadata_public".to_string(),
         value: Some(serde_json::to_value(metadata_public)?),
     };
+
     ory_client::apis::identity_api::patch_identity(
         &configuration.0,
         &identity_with_credentials.id,
@@ -123,6 +131,7 @@ pub async fn oidc_reload(
     )
     .await
     .map_err(OryError::from)?;
+
     Ok(actix_web::HttpResponse::Ok().json(identity_with_credentials))
 }
 
@@ -132,7 +141,8 @@ pub async fn oidc_reload(
 async fn check_github_exists(id: String) -> Result<bool, ApiError> {
     // Reqwest check to labrinth
     let client = reqwest::Client::new();
-    let res: Option<LabrinthUser> = client
+
+    let res = client
         .get(format!(
             "{}/admin/_legacy_account/{id}",
             dotenvy::var("LABRINTH_API_URL").unwrap()
@@ -144,10 +154,36 @@ async fn check_github_exists(id: String) -> Result<bool, ApiError> {
             dotenvy::var("LABRINTH_ADMIN_KEY").unwrap(),
         )
         .send()
-        .await?
-        .json()
-        .await?;
+        .await;
+    let res = res?;
+    let res: Option<LabrinthUser> = res.json().await?;
     Ok(res.is_some())
+}
+
+// Reqwest check to labrinth to update the github_id
+// _edit_github_id/{id}
+// Github is passed in body as github_id
+#[derive(Deserialize, Serialize)]
+pub struct GithubIdPayload {
+    github_id: Option<String>,
+}
+async fn update_github_id(kratos_id: &str, github_id: Option<String>) -> Result<(), ApiError> {
+    let client = reqwest::Client::new();
+    let _res = client
+        .post(format!(
+            "{}/admin/_edit_github_id/{kratos_id}",
+            dotenvy::var("LABRINTH_API_URL").unwrap()
+        ))
+        .header("Accept", "application/json")
+        .header("Accept-Language", "en_US")
+        .header(
+            "Modrinth-Admin",
+            dotenvy::var("LABRINTH_ADMIN_KEY").unwrap(),
+        )
+        .json(&GithubIdPayload { github_id })
+        .send()
+        .await?;
+    Ok(())
 }
 
 #[derive(Deserialize, Serialize)]
