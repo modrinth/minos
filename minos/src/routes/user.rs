@@ -1,10 +1,10 @@
-use crate::routes::{ApiError, OryError};
+use crate::{
+    routes::{ApiError, OryError},
+    util::ory::AdminConfiguration,
+};
 use actix_web::{get, web, HttpResponse};
 use ory_client::{
-    apis::{
-        configuration::Configuration,
-        identity_api::{self, get_identity},
-    },
+    apis::identity_api::{self, get_identity},
     models::{Identity, Session},
 };
 use serde::{Deserialize, Serialize};
@@ -78,10 +78,10 @@ pub struct MinosUser {
 #[get("/user/{minos_id}")]
 pub async fn user_get_id(
     path: web::Path<String>,
-    configuration: web::Data<Configuration>,
+    configuration: web::Data<AdminConfiguration>,
 ) -> Result<HttpResponse, ApiError> {
     let minos_id = &path.into_inner();
-    let identity = get_identity(&configuration, minos_id, None)
+    let identity = get_identity(&configuration.0, minos_id, None)
         .await
         .map_err(OryError::from)?;
     let minos_user = extract_minos_user(&identity)?;
@@ -101,15 +101,14 @@ pub struct Token {
 #[get("/user/token")]
 pub async fn user_get_id_by_token(
     web::Query(token): web::Query<Token>,
-    configuration: web::Data<Configuration>,
+    configuration: web::Data<AdminConfiguration>,
 ) -> Result<HttpResponse, ApiError> {
     // If it starts with "ory_", remove it to extract raw session ID
     let token = Token {
         token: token.token.trim_start_matches("ory_").to_string(),
     };
-    println!("token: {}", token.token);
     let session = identity_api::get_session(
-        &configuration,
+        &configuration.0,
         &token.token,
         Some(vec!["Identity".to_string()]),
     )

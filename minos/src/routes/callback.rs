@@ -1,12 +1,11 @@
 use actix_web::web;
-use ory_client::apis::configuration::Configuration;
 use serde::{Deserialize, Serialize};
 
 use sqlx::pool;
 
 use crate::{
     routes::{ApiError, OryError},
-    util::{callback::CallbackError, oidc},
+    util::{callback::CallbackError, oidc, ory::AdminConfiguration},
 };
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -23,10 +22,10 @@ pub struct Payload {
 pub async fn settings_callback(
     payload: web::Json<Payload>,
     pool: web::Data<pool::Pool<sqlx::Postgres>>,
-    configuration: web::Data<Configuration>,
+    configuration: web::Data<AdminConfiguration>,
 ) -> Result<actix_web::HttpResponse, CallbackError> {
     let identity_with_credentials = ory_client::apis::identity_api::get_identity(
-        &configuration,
+        &configuration.0,
         &payload.identity_id,
         Some(vec!["oidc".to_string()]),
     )

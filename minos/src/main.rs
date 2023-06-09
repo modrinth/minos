@@ -8,8 +8,6 @@ use crate::util::env::parse_var;
 use actix_cors::Cors;
 use actix_web::{http, web, App, HttpServer};
 use log::{error, info, warn};
-use ory_client::apis::configuration::Configuration;
-use reqwest::Client;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -25,16 +23,9 @@ async fn main() -> std::io::Result<()> {
         ));
     }
 
-    // Default Ory configuration
-    let configuration = Configuration {
-        api_key: None,
-        base_path: dotenvy::var("ORY_URL").unwrap(),
-        client: Client::new(),
-        basic_auth: None,
-        user_agent: Some("Modrinth Minos".to_string()),
-        oauth_access_token: None,
-        bearer_access_token: None,
-    };
+    // Set up Ory configurations
+    let basic_configuration = util::ory::generate_basic_configuration();
+    let admin_configuration = util::ory::generate_admin_configuration();
 
     // Set up Sentry watching for errors
     let sentry = sentry::init(sentry::ClientOptions {
@@ -72,7 +63,8 @@ async fn main() -> std::io::Result<()> {
                     .max_age(3600),
             )
             .app_data(web::Data::new(pool.clone()))
-            .app_data(web::Data::new(configuration.clone()))
+            .app_data(web::Data::new(basic_configuration.clone()))
+            .app_data(web::Data::new(admin_configuration.clone()))
             .configure(routes::user_config)
             .configure(routes::admin_config)
             .wrap(sentry_actix::Sentry::new())
@@ -102,6 +94,7 @@ fn check_env_vars() -> bool {
 
     failed |= check_var::<String>("BIND_ADDR");
     failed |= check_var::<String>("ORY_URL");
+    failed |= check_var::<String>("ORY_ADMIN_URL");
     failed |= check_var::<String>("ORY_AUTH_BEARER");
 
     failed |= check_var::<String>("LABRINTH_API_URL");

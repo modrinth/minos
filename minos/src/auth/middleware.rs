@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
 use crate::routes::ApiError;
+use crate::util::ory::{generate_basic_configuration, BasicConfiguration};
 use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform};
 use actix_web::{Error, HttpMessage};
 use actix_web_httpauth::extractors::bearer::BearerAuth;
@@ -8,10 +9,9 @@ use actix_web_httpauth::extractors::{bearer, AuthenticationError};
 use futures::future::{ready, LocalBoxFuture, Ready};
 use futures::FutureExt;
 use http::header::COOKIE;
-use ory_client::apis::configuration::Configuration;
+
 use ory_client::apis::frontend_api::to_session;
 use ory_client::models::Session;
-use reqwest::Client;
 
 use super::AuthError;
 
@@ -19,7 +19,7 @@ pub struct Authenticator;
 
 pub struct AuthenticatorMiddleware<S> {
     service: Rc<S>,
-    configuration: Rc<Configuration>,
+    configuration: Rc<BasicConfiguration>,
 }
 
 impl<S, B> Transform<S, ServiceRequest> for Authenticator
@@ -38,15 +38,7 @@ where
     fn new_transform(&self, service: S) -> Self::Future {
         ready(Ok(AuthenticatorMiddleware {
             service: Rc::new(service),
-            configuration: Rc::new(Configuration {
-                api_key: None,
-                base_path: dotenvy::var("ORY_URL").unwrap(),
-                client: Client::new(),
-                basic_auth: None,
-                user_agent: Some("Modrinth Minos authenticator".to_string()),
-                oauth_access_token: None,
-                bearer_access_token: None,
-            }),
+            configuration: Rc::new(generate_basic_configuration()),
         }))
     }
 }
@@ -94,7 +86,7 @@ where
 // 2. If a session token is passed in the Authorization header (as a Bearer token), we try to create a session from it
 // That way Minos endpoints can be called from a browser, or from a API
 async fn get_authenticated_session(
-    configuration: &Configuration,
+    configuration: &BasicConfiguration,
     req: &ServiceRequest,
 ) -> Result<Session, AuthError> {
     // Cookie
@@ -103,7 +95,7 @@ async fn get_authenticated_session(
     if cookies_unparsed.is_none() {
         return Err(AuthError::NoMethodFound);
     }
-    let session: Session = to_session(configuration, None, cookies_unparsed).await?;
+    let session: Session = to_session(&configuration.0, None, cookies_unparsed).await?;
     Ok(session)
 }
 
