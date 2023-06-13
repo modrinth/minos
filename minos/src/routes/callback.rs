@@ -5,7 +5,7 @@ use sqlx::pool;
 
 use crate::{
     routes::{ApiError, OryError},
-    util::{callback::CallbackError, oidc, ory::AdminConfiguration},
+    util::{callback::CallbackError, email, oidc, ory::AdminConfiguration},
 };
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -35,6 +35,9 @@ pub async fn settings_callback(
 
     // Handle OIDC:
     oidc::oidc_reload(&identity_with_credentials, &pool, &configuration).await?;
+
+    // Update email:
+    email::email_update(&identity_with_credentials).await?;
 
     Ok(actix_web::HttpResponse::Ok().json(identity_with_credentials))
 }
