@@ -153,6 +153,10 @@ async fn check_github_exists(id: String) -> Result<bool, ApiError> {
             "Modrinth-Admin",
             dotenvy::var("LABRINTH_ADMIN_KEY").unwrap(),
         )
+        .header(
+            "x-ratelimit-key",
+            dotenvy::var("RATE_LIMIT_IGNORE_KEY").unwrap(),
+        )
         .send()
         .await;
     let res = res?;
@@ -179,6 +183,10 @@ async fn update_github_id(kratos_id: &str, github_id: Option<String>) -> Result<
         .header(
             "Modrinth-Admin",
             dotenvy::var("LABRINTH_ADMIN_KEY").unwrap(),
+        )
+        .header(
+            "x-ratelimit-key",
+            dotenvy::var("RATE_LIMIT_IGNORE_KEY").unwrap(),
         )
         .json(&GithubIdPayload { github_id })
         .send()

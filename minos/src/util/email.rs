@@ -34,6 +34,10 @@ pub async fn email_update(
             "Modrinth-Admin",
             dotenvy::var("LABRINTH_ADMIN_KEY").unwrap(),
         )
+        .header(
+            "x-ratelimit-key",
+            dotenvy::var("RATE_LIMIT_IGNORE_KEY").unwrap(),
+        )
         .json(&EmailPayload { email })
         .send()
         .await?;
