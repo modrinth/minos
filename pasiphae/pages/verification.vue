@@ -90,7 +90,9 @@ async function updateFlow() {
     }
   }
 }
-await updateFlow()
+if (!process.server) {
+  await updateFlow()
+}
 
 // Attempts to verify an account with the given 'code' (sent to an email with the registration flow)
 async function verify() {

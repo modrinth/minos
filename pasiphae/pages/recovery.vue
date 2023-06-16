@@ -76,7 +76,9 @@ async function updateFlow() {
     }
   }
 }
-await updateFlow()
+if (!process.server) {
+  await updateFlow()
+}
 
 // Send recovery email to the set 'email'
 async function recovery() {

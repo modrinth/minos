@@ -194,7 +194,9 @@ async function updateFlow() {
   }
 }
 
-await updateFlow()
+if (!process.server) {
+  await updateFlow()
+}
 
 const icons = {
   discord: DiscordIcon,
