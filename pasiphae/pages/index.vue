@@ -46,16 +46,19 @@ const logoutUrl = ref(null)
 // Fetch the session directly from Ory
 // Authentication is successful if cookie represents a valid Ory Session
 try {
-  session.value = await app.$oryConfig.toSession({ cookie: getOryCookies() })
-  console.error('very outta here')
+  if (!process.server) {
+    session.value = await app.$oryConfig.toSession({ cookie: getOryCookies() })
+    console.error('very outta here')
 
-  const { data: logOutData } = await app.$oryConfig.createBrowserLogoutFlow({
-    cookie: getOryCookies(),
-  })
-  console.error('very outta here')
+    const { data: logOutData } = await app.$oryConfig.createBrowserLogoutFlow({
+      cookie: getOryCookies(),
+    })
+    console.error('very outta here')
 
-  logoutUrl.value = logOutData.logout_url
-  console.error('hi')
+    logoutUrl.value = logOutData.logout_url
+    console.error('hi')
+
+  }
 } catch (e) {
   if (e.response && (e.response.status === 404 || e.response.status === 403)) {
     // 403 likely means another level of auth is needed- either way, reauthenticate with a new flow

@@ -73,13 +73,16 @@ const flowData = ref(null)
 const providers = ref([])
 
 try {
-  const r = await $oryConfig.getRegistrationFlow({
-    id: route.query.flow || '',
-    cookie: getOryCookies(),
-  })
-  flowData.value = r.data
-  providers.value = extractOidcProviders(r.data)
-  oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
+  if (!process.server) {
+
+    const r = await $oryConfig.getRegistrationFlow({
+      id: route.query.flow || '',
+      cookie: getOryCookies(),
+    })
+    flowData.value = r.data
+    providers.value = extractOidcProviders(r.data)
+    oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
+  }
 } catch (e) {
   // Failure to get flow information means a valid flow does not exist as a query parameter, so we redirect to regenerate it
   // Any other error we just leave the page

@@ -30,8 +30,10 @@ const formattedValue = (value) => {
 }
 
 try {
-  const r = await $oryConfig.getFlowError({ id: route.query.id, cookie: getOryCookies() })
-  oryUiError.value = formattedValue(r.data.error)
+  if (!process.server) {
+    const r = await $oryConfig.getFlowError({ id: route.query.id, cookie: getOryCookies() })
+    oryUiError.value = formattedValue(r.data.error)
+  }
 } catch (e) {
   oryUiError.value = JSON.stringify(e)
 }
