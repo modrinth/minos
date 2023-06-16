@@ -29,8 +29,6 @@
   </div>
 </template>
 <script setup>
-import { getOryCookies } from '~/helpers/ory-ui-extract'
-
 const config = useRuntimeConfig()
 const app = useNuxtApp()
 
@@ -47,17 +45,14 @@ const logoutUrl = ref(null)
 // Authentication is successful if cookie represents a valid Ory Session
 try {
   if (!process.server) {
-    session.value = await app.$oryConfig.toSession({ cookie: getOryCookies() })
+    session.value = await app.$oryConfig.toSession({})
     console.error('very outta here')
 
-    const { data: logOutData } = await app.$oryConfig.createBrowserLogoutFlow({
-      cookie: getOryCookies(),
-    })
+    const { data: logOutData } = await app.$oryConfig.createBrowserLogoutFlow({})
     console.error('very outta here')
 
     logoutUrl.value = logOutData.logout_url
     console.error('hi')
-
   }
 } catch (e) {
   if (e.response && (e.response.status === 404 || e.response.status === 403)) {

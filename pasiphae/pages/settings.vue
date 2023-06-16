@@ -116,7 +116,6 @@ import {
   extractNestedTotpData,
   extractOidcLinkProviders,
   extractOidcUnlinkProviders,
-  getOryCookies,
 } from '~/helpers/ory-ui-extract'
 import DiscordIcon from '@/assets/discord.svg'
 import GoogleIcon from '@/assets/google.svg'
@@ -150,7 +149,6 @@ async function updateFlow() {
   try {
     const r = await $oryConfig.getSettingsFlow({
       id: route.query.flow || '',
-      cookie: getOryCookies(),
     })
 
     flowData.value = r.data

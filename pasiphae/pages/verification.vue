@@ -38,7 +38,6 @@ import {
   extractNestedCsrfToken,
   extractNestedErrorMessagesFromUiData,
   extractNestedErrorMessagesFromError,
-  getOryCookies,
 } from '~/helpers/ory-ui-extract'
 
 const { $oryConfig } = useNuxtApp()
@@ -57,7 +56,6 @@ async function updateFlow() {
   try {
     const r = await $oryConfig.getVerificationFlow({
       id: route.query.flow || '',
-      cookie: getOryCookies(),
     })
     flowData.value = r.data
     oryUiMsgs.value = extractNestedErrorMessagesFromUiData(flowData.value)

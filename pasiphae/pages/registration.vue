@@ -53,7 +53,6 @@ import {
   extractNestedErrorMessagesFromError,
   extractNestedErrorMessagesFromUiData,
   extractOidcProviders,
-  getOryCookies,
 } from '~/helpers/ory-ui-extract'
 
 const config = useRuntimeConfig()
@@ -74,10 +73,8 @@ const providers = ref([])
 
 try {
   if (!process.server) {
-
     const r = await $oryConfig.getRegistrationFlow({
       id: route.query.flow || '',
-      cookie: getOryCookies(),
     })
     flowData.value = r.data
     providers.value = extractOidcProviders(r.data)
