@@ -99,6 +99,7 @@ fn check_env_vars() -> bool {
 
     failed |= check_var::<String>("LABRINTH_API_URL");
     failed |= check_var::<String>("LABRINTH_ADMIN_KEY");
+    failed |= check_var::<String>("RATE_LIMIT_IGNORE_KEY");
 
     failed
 }
