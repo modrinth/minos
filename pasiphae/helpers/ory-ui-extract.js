@@ -173,7 +173,16 @@ export function extractNestedLookupCodes(data) {
   return { codes, regenerateButton, disableButton }
 }
 
-export function getOryCookies() {
+export function addOryCookies() {
+  console.error("hi")
   const event = useRequestEvent()
+  console.error("hi2")
+  if (process.server) {
+    console.error( "proc"+ event.node.req.headers.cookie)
+  } else {
+    console.error("doc")
+    console.error(document.cookie)
+  } 
+  console.error("outta here")
   return process.server ? event.node.req.headers.cookie : document.cookie
 }

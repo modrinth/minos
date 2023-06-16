@@ -99,8 +99,9 @@ const providers = ref([])
 
 async function updateFlow() {
   try {
+    console.error("here22:"+getOryCookies())
     const r = await $oryConfig.getLoginFlow({ id: route.query.flow || '', cookie: getOryCookies() })
-
+    console.error("hello22")
     flowData.value = r.data
     providers.value = extractOidcProviders(r.data)
     oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
@@ -120,8 +121,9 @@ async function updateFlow() {
       oryUiMsgs.value = extractNestedErrorMessagesFromError(e)
     }
   }
-}
-await updateFlow()
+} 
+  await updateFlow()
+
 
 const icons = {
   discord: DiscordIcon,
@@ -179,7 +181,7 @@ async function loginLookupSecret() {
 }
 
 // loginFlowBody must match a variant of UpdateLoginFlowWith<method>Method (included are UpdateLoginFlowWithOidcMethod | UpdateLoginFlowWithPasswordMethod)
-async function sendUpdate(loginFlowBody) {
+async function sendUpdate(loginFlowBody) {  
   const csrfToken = extractNestedCsrfToken(flowData.value) // must be directly set
   loginFlowBody.csrf_token = csrfToken
   try {
