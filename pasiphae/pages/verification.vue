@@ -63,7 +63,7 @@ async function updateFlow() {
     // // If they clicked on the email link and the flow is still the same, the flow.data.ui object
     // // will contain 'code' amongst its UI nodes with the verification code- which ideally can be put automatically
     // // into the field so they can just verify it and continue.
-    if (flowData.value.state === 'sent_email') {
+    if (flowData.value && flowData.value.state === 'sent_email') {
       const returnedNodes = r.data.ui.nodes
       for (let i = 0; i < returnedNodes.length; i++) {
         if (returnedNodes[i].group === 'code' && returnedNodes[i].attributes.name === 'code') {
