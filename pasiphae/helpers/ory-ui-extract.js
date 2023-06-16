@@ -179,6 +179,7 @@ export function getOryCookies() {
   console.error('hi2')
   if (process.server) {
     console.error('proc' + event.node.req.headers.cookie)
+    console.error(event.node.req.headers.cookie)
   } else {
     console.error('doc')
     console.error(document.cookie)
