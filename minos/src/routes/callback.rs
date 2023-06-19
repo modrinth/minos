@@ -39,7 +39,7 @@ pub async fn settings_callback(
 
 
     // Handle OIDC:
-    let a = oidc::oidc_reload(&identity_with_credentials, &pool, &configuration).await;
+    let a = oidc::oidc_reload(&identity_with_credentials, &pool, &configuration).await.map_err(CallbackError::from);
     dbg!(&a);
     let a = a?;
 
