@@ -46,13 +46,8 @@ const logoutUrl = ref(null)
 try {
   if (!process.server) {
     session.value = await app.$oryConfig.toSession({})
-    console.error('very outta here')
-
     const { data: logOutData } = await app.$oryConfig.createBrowserLogoutFlow({})
-    console.error('very outta here')
-
-    logoutUrl.value = logOutData.logout_url
-    console.error('hi')
+    logoutUrl.value = logOutData.logout_url  
   }
 } catch (e) {
   if (e.response && (e.response.status === 404 || e.response.status === 403)) {
@@ -60,5 +55,4 @@ try {
     navigateTo(config.public.oryUrl + '/self-service/login/browser?aal=aal2', { external: true })
   }
 }
-console.error('done')
 </script>

@@ -6,7 +6,7 @@
         {{ oryUiMsg.text }}
       </p>
     </div>
-    <template v-if="flowData.state == 'choose_method'">
+    <template v-if="flowData && flowData.state == 'choose_method'">
       <p>
         Enter your email below and we'll send a recovery link to allow you to recover your account.
       </p>
@@ -14,7 +14,7 @@
       <input id="email" v-model="email" type="text" placeholder="Email" />
       <button class="btn btn-primary continue-btn" @click="recovery">Send recovery email</button>
     </template>
-    <template v-else-if="flowData.state == 'sent_email'">
+    <template v-else-if="flowData && flowData.state == 'sent_email'">
       <p>
         A recovery email has been sent to <strong>{{ email }}</strong
         >.
@@ -23,7 +23,7 @@
       <input id="code" v-model="code" type="text" placeholder="Enter code" />
       <button class="btn btn-primary continue-btn" @click="submitCode">Recover</button>
     </template>
-    <template v-else-if="flowData.state == 'passed_challenge'">
+    <template v-else-if="flowData && flowData.state == 'passed_challenge'">
       <p>
         You are resetting the password for the Modrinth account associated with
         <strong>{{ email }}</strong

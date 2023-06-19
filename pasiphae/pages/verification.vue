@@ -1,5 +1,5 @@
 <template v-if="flowData">
-  <div v-if="flowData.state === 'sent_email'" class="page-container">
+  <div v-if="flowData && flowData.state === 'sent_email'" class="page-container">
     <h1>Verify your email</h1>
     <div v-if="oryUiMsgs.length > 0" class="errors">
       <p v-for="oryUiMsg in oryUiMsgs" :key="oryUiMsg">
@@ -11,7 +11,7 @@
     <button class="btn btn-primary continue-btn" @click="verify">Verify Email</button>
     <p><a class="text-link" :href="recoverFlowEndpoint" data-testid="sign-in">Resend email</a></p>
   </div>
-  <div v-else-if="flowData.state === 'choose_method'" class="page-container">
+  <div v-else-if="flowData && flowData.state === 'choose_method'" class="page-container">
     <h1>Verify your email</h1>
     <div v-if="oryUiMsgs.length > 0" class="errors">
       <p v-for="oryUiMsg in oryUiMsgs" :key="oryUiMsg">
@@ -22,7 +22,7 @@
     <input v-model="code" placeholder="Enter email" type="text" />
     <button class="btn btn-primary continue-btn" @click="verify">Send code</button>
   </div>
-  <div v-else-if="flowData.state === 'passed_challenge'" class="page-container">
+  <div v-else-if="flowData && flowData.state === 'passed_challenge'" class="page-container">
     <h1>Successfully verified email.</h1>
     <div v-if="oryUiMsgs.length > 0" class="errors">
       <p v-for="oryUiMsg in oryUiMsgs" :key="oryUiMsg">
@@ -54,13 +54,10 @@ const code = ref(route.query.code ?? '')
 const flowData = ref(null)
 async function updateFlow() {
   try {
-    console.error('got v flow')
 
     const r = await $oryConfig.getVerificationFlow({
       id: route.query.flow || '',
     })
-    console.error('hello111')
-    console.error(r)
 
     flowData.value = r.data
     oryUiMsgs.value = extractNestedErrorMessagesFromUiData(flowData.value)
@@ -69,7 +66,6 @@ async function updateFlow() {
     // // will contain 'code' amongst its UI nodes with the verification code- which ideally can be put automatically
     // // into the field so they can just verify it and continue.
     if (flowData.value && flowData.value.state === 'sent_email') {
-      console.error('hello2')
       const returnedNodes = r.data.ui.nodes
       for (let i = 0; i < returnedNodes.length; i++) {
         if (returnedNodes[i].group === 'code' && returnedNodes[i].attributes.name === 'code') {
@@ -100,7 +96,6 @@ if (!process.server) {
 
 // Attempts to verify an account with the given 'code' (sent to an email with the registration flow)
 async function verify() {
-  console.error('verify')
 
   let body
   if (flowData.value.state === 'sent_email') {

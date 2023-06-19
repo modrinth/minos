@@ -6,7 +6,7 @@
       </p>
     </div>
 
-    <template v-if="flowData.requested_aal == 'aal2'">
+    <template v-if="flowData && flowData.requested_aal == 'aal2'">
       <h1>Two-factor authentication</h1>
       <p>Please enter the code shown in your authentication app.</p>
       <label for="mfa" hidden>Authentication code</label>
@@ -29,7 +29,7 @@
         Continue <RightArrowIcon />
       </button>
     </template>
-    <template v-if="flowData.requested_aal == 'aal1'">
+    <template v-if="flowData && flowData.requested_aal == 'aal1'">
       <h1>Continue with</h1>
       <div class="third-party">
         <Button
