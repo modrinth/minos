@@ -24,6 +24,7 @@ pub async fn settings_callback(
     pool: web::Data<pool::Pool<sqlx::Postgres>>,
     configuration: web::Data<AdminConfiguration>,
 ) -> Result<actix_web::HttpResponse, CallbackError> {
+    println!("Settings callback: {:?}", payload);
     let identity_with_credentials = ory_client::apis::identity_api::get_identity(
         &configuration.0,
         &payload.identity_id,
@@ -31,13 +32,21 @@ pub async fn settings_callback(
     )
     .await
     .map_err(OryError::from)
-    .map_err(ApiError::from)?;
+    .map_err(ApiError::from);
+    
+    dbg!(&identity_with_credentials);
+    let identity_with_credentials = identity_with_credentials?;
+
 
     // Handle OIDC:
-    oidc::oidc_reload(&identity_with_credentials, &pool, &configuration).await?;
+    let a = oidc::oidc_reload(&identity_with_credentials, &pool, &configuration).await;
+    dbg!(&a);
+    let a = a?;
 
     // Update email:
-    email::email_update(&identity_with_credentials).await?;
+    let a = email::email_update(&identity_with_credentials).await;
+    dbg!(&a);
+    let a = a?;
 
     Ok(actix_web::HttpResponse::Ok().json(identity_with_credentials))
 }
