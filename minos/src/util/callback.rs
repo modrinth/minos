@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::database::models::webhook::OryMessage;
 use crate::database::models::webhook::OryWebhookMessagePacket;
 use crate::database::models::webhook::OryWebhookPayload;
@@ -20,18 +22,22 @@ impl actix_web::ResponseError for CallbackError {
         self.status_code
     }
     fn error_response(&self) -> actix_web::HttpResponse {
-        actix_web::HttpResponse::build(self.status_code()).json(OryWebhookPayload {
-            messages: vec![OryWebhookMessagePacket {
-                instance_ptr: self.name.to_string(),
-                messages: vec![OryMessage {
-                    id: self.id,
-                    text: self.text.to_string(),
-                    r#type: self.r#type.to_string(),
-                    context: None,
-                }],
-            }],
-        })
+        get_error_response(&self)
     }
+}
+
+fn get_error_response(e : &CallbackError) -> actix_web::HttpResponse {
+    actix_web::HttpResponse::build(e.status_code()).json(OryWebhookPayload {
+        messages: vec![OryWebhookMessagePacket {
+            instance_ptr: e.name.to_string(),
+            messages: vec![OryMessage {
+                id: e.id,
+                text: e.text.to_string(),
+                r#type: e.r#type.to_string(),
+                context: Some(HashMap::new()),
+            }],
+        }],
+    })
 }
 
 impl std::fmt::Display for CallbackError {
@@ -44,8 +50,8 @@ impl std::fmt::Display for CallbackError {
 impl From<ApiError> for CallbackError {
     fn from(err: ApiError) -> Self {
         CallbackError {
-            name: "Callback Error".to_string(),
-            id: 0,
+            name: "#/traits/email".to_string(),
+            id: 1,
             text: err.to_string(),
             r#type: err.get_error_response().to_string(),
             status_code: err.status_code(),
