@@ -54,14 +54,17 @@ const code = ref(route.query.code ?? '')
 const flowData = ref(null)
 async function updateFlow() {
   try {
+    console.error('got v flow')
+
     const r = await $oryConfig.getVerificationFlow({
       id: route.query.flow || '',
     })
+    console.error('hello111')
+    console.error(r)
+
     flowData.value = r.data
     oryUiMsgs.value = extractNestedErrorMessagesFromUiData(flowData.value)
 
-    console.error('hello111')
-    console.loerrorg(r)
     // // If they clicked on the email link and the flow is still the same, the flow.data.ui object
     // // will contain 'code' amongst its UI nodes with the verification code- which ideally can be put automatically
     // // into the field so they can just verify it and continue.
@@ -97,6 +100,8 @@ if (!process.server) {
 
 // Attempts to verify an account with the given 'code' (sent to an email with the registration flow)
 async function verify() {
+  console.error('verify')
+
   let body
   if (flowData.value.state === 'sent_email') {
     body = {

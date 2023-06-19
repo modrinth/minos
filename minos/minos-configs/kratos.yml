@@ -14,6 +14,7 @@ serve:
         - http://127.0.0.1:4000
         - https://modrinth.com
         - http://0.0.0.0:4455
+        - http://0.0.0.0:8000
       allowed_methods:
         - POST
         - GET
