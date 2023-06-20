@@ -44,6 +44,10 @@ selfservice:
   methods:
     password:
       enabled: true
+    totp:
+      config:
+        issuer: 'Modrinth'
+      enabled: true
     lookup_secret:
       enabled: true
     link:
