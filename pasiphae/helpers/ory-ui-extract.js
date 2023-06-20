@@ -3,8 +3,6 @@
 // }
 export function extractNestedErrorMessagesFromError(e) {
   const errs = []
-  errs.push({ id: 0, type: 'error', text: JSON.stringify(e) })
-
   if (!e) return errs
   if (!('response' in e)) return errs
   if (!('data' in e.response)) return errs
@@ -37,12 +35,16 @@ export function extractNestedErrorMessagesFromError(e) {
 export function extractNestedErrorMessagesFromUiData(data) {
   let errs = []
   if ('messages' in data.ui) {
-    errs = errs.concat(data.ui.messages)
+    if (data.ui.messages.length > 0) {
+      errs = errs.concat(data.ui.messages)
+    }
   } else if ('nodes' in data.ui) {
     // sometimes, formatted slightly differently
     for (let i = 0; i < data.ui.nodes.length; i++) {
       const node = data.ui.nodes[i]
-      errs = errs.concat(node.messages)
+      if (node.messages.length > 0) {
+        errs = errs.concat(node.messages)
+      }
     }
   }
   return errs

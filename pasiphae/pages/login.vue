@@ -105,8 +105,8 @@ async function updateFlow() {
 
     // Show a logout link (in particular)
     if (r.data.requested_aal === 'aal2') {
-      const data = await app.$oryConfig.createBrowserLogoutFlow()
-      logoutUrlEndpoint.value = data.logout_url
+      const data = await $oryConfig.createBrowserLogoutFlow()
+      logoutUrlEndpoint.value = data.data.logout_url
     }
   } catch (e) {
     if (e && 'response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
