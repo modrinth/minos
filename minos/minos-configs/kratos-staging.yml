@@ -247,3 +247,6 @@ courier:
     from_address: no-reply@mail.modrinth.com
     from_name: Modrinth
   template_override_path: /etc/config/kratos/mail-templates
+
+cookies:
+  domain: .modrinth.com
