@@ -6,7 +6,7 @@
       </p>
     </div>
 
-    <template v-if="flowData.requested_aal == 'aal2'">
+    <template v-if="flowData && flowData.requested_aal == 'aal2'">
       <h1>Two-factor authentication</h1>
       <p>Please enter the code shown in your authentication app.</p>
       <label for="mfa" hidden>Authentication code</label>
@@ -29,7 +29,7 @@
         Continue <RightArrowIcon />
       </button>
     </template>
-    <template v-if="flowData.requested_aal == 'aal1'">
+    <template v-if="flowData && flowData.requested_aal == 'aal1'">
       <h1>Continue with</h1>
       <div class="third-party">
         <Button
@@ -76,7 +76,6 @@ import {
   extractNestedErrorMessagesFromError,
   extractOidcProviders,
   extractNestedErrorMessagesFromUiData,
-  getOryCookies,
 } from '~/helpers/ory-ui-extract'
 
 const config = useRuntimeConfig()
@@ -99,16 +98,15 @@ const providers = ref([])
 
 async function updateFlow() {
   try {
-    const r = await $oryConfig.getLoginFlow({ id: route.query.flow || '', cookie: getOryCookies() })
-
+    const r = await $oryConfig.getLoginFlow({ id: route.query.flow || '' })
     flowData.value = r.data
     providers.value = extractOidcProviders(r.data)
     oryUiMsgs.value = extractNestedErrorMessagesFromUiData(r.data)
 
     // Show a logout link (in particular)
     if (r.data.requested_aal === 'aal2') {
-      const data = await app.$oryConfig.createBrowserLogoutFlow()
-      logoutUrlEndpoint.value = data.logout_url
+      const data = await $oryConfig.createBrowserLogoutFlow()
+      logoutUrlEndpoint.value = data.data.logout_url
     }
   } catch (e) {
     if (e && 'response' in e && 'data' in e.response && 'redirect_browser_to' in e.response.data) {
@@ -121,7 +119,9 @@ async function updateFlow() {
     }
   }
 }
-await updateFlow()
+if (!process.server) {
+  await updateFlow()
+}
 
 const icons = {
   discord: DiscordIcon,

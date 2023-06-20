@@ -44,6 +44,10 @@ selfservice:
   methods:
     password:
       enabled: true
+    totp:
+      config:
+        issuer: 'Modrinth'
+      enabled: true
     lookup_secret:
       enabled: true
     link:
@@ -243,3 +247,6 @@ courier:
     from_address: no-reply@mail.modrinth.com
     from_name: Modrinth
   template_override_path: /etc/config/kratos/mail-templates
+
+cookies:
+  domain: .modrinth.com
