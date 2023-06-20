@@ -33,7 +33,6 @@ pub async fn settings_callback(
     .map_err(OryError::from)
     .map_err(ApiError::from);
 
-    dbg!(&identity_with_credentials);
     let identity_with_credentials = identity_with_credentials?;
 
     // Handle OIDC:
