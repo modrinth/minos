@@ -54,7 +54,6 @@ const code = ref(route.query.code ?? '')
 const flowData = ref(null)
 async function updateFlow() {
   try {
-
     const r = await $oryConfig.getVerificationFlow({
       id: route.query.flow || '',
     })
@@ -96,7 +95,6 @@ if (!process.server) {
 
 // Attempts to verify an account with the given 'code' (sent to an email with the registration flow)
 async function verify() {
-
   let body
   if (flowData.value.state === 'sent_email') {
     body = {

@@ -47,7 +47,7 @@ try {
   if (!process.server) {
     session.value = await app.$oryConfig.toSession({})
     const { data: logOutData } = await app.$oryConfig.createBrowserLogoutFlow({})
-    logoutUrl.value = logOutData.logout_url  
+    logoutUrl.value = logOutData.logout_url
   }
 } catch (e) {
   if (e.response && (e.response.status === 404 || e.response.status === 403)) {

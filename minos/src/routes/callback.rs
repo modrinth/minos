@@ -32,16 +32,19 @@ pub async fn settings_callback(
     .await
     .map_err(OryError::from)
     .map_err(ApiError::from);
-    
+
     dbg!(&identity_with_credentials);
     let identity_with_credentials = identity_with_credentials?;
 
-
     // Handle OIDC:
-    oidc::oidc_reload(&identity_with_credentials, &pool, &configuration).await.map_err(CallbackError::from)?;
-    
+    oidc::oidc_reload(&identity_with_credentials, &pool, &configuration)
+        .await
+        .map_err(CallbackError::from)?;
+
     // Update email:
-    email::email_update(&identity_with_credentials).await.map_err(CallbackError::from)?;
-    
+    email::email_update(&identity_with_credentials)
+        .await
+        .map_err(CallbackError::from)?;
+
     Ok(actix_web::HttpResponse::Ok().json(identity_with_credentials))
 }

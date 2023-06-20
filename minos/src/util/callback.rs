@@ -22,11 +22,11 @@ impl actix_web::ResponseError for CallbackError {
         self.status_code
     }
     fn error_response(&self) -> actix_web::HttpResponse {
-        get_error_response(&self)
+        get_error_response(self)
     }
 }
 
-fn get_error_response(e : &CallbackError) -> actix_web::HttpResponse {
+fn get_error_response(e: &CallbackError) -> actix_web::HttpResponse {
     actix_web::HttpResponse::build(e.status_code()).json(OryWebhookPayload {
         messages: vec![OryWebhookMessagePacket {
             instance_ptr: e.name.to_string(),
